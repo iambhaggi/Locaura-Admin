@@ -4,29 +4,29 @@ import { IRetailer } from '../models/Retailer.model';
 import { Logger } from '../utils/logger';
 
 export class AuthService {
-    private retailerRepository = new RetailerRepository();
+    private retailer_repository = new RetailerRepository();
 
     // Step 1: Send OTP to Phone
-    async sendPhoneOTP(phone: string): Promise<boolean> {
+    async send_phone_otp(phone: string): Promise<boolean> {
         // Generate a 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-        let retailer = await this.retailerRepository.findByPhone(phone);
+        let retailer = await this.retailer_repository.find_by_phone(phone);
 
         if (!retailer) {
             // Initiate partial registration
-            retailer = await this.retailerRepository.create({
+            retailer = await this.retailer_repository.create({
                 phone,
                 otp,
-                otpExpiry,
+                otp_expiry,
                 status: 'pending'
             });
         } else {
             // Update existing retailer with new OTP
-            await this.retailerRepository.update(retailer._id.toString(), {
+            await this.retailer_repository.update(retailer._id.toString(), {
                 otp,
-                otpExpiry
+                otp_expiry
             });
         }
 
@@ -37,60 +37,59 @@ export class AuthService {
     }
 
     // Step 2: Verify Phone OTP
-    async verifyPhoneOTP(phone: string, otp: string): Promise<{ token: string, retailer: IRetailer } | null> {
-        const retailer = await this.retailerRepository.findByPhone(phone);
+    async verify_phone_otp(phone: string, otp: string): Promise<{ token: string, retailer: IRetailer } | null> {
+        const retailer = await this.retailer_repository.find_by_phone(phone);
 
-        if (!retailer || !retailer.otp || !retailer.otpExpiry) {
+        if (!retailer || !retailer.otp || !retailer.otp_expiry) {
             return null;
         }
 
         // Check if OTP matches and is not expired
-        if (retailer.otp !== otp || retailer.otpExpiry < new Date()) {
+        if (retailer.otp !== otp || retailer.otp_expiry < new Date()) {
             return null;
         }
 
         // Mark phone as verified and clear OTP
-        const updatedRetailer = await this.retailerRepository.update(retailer._id.toString(), {
-            phoneVerified: true,
+        const updated_retailer = await this.retailer_repository.update(retailer._id.toString(), {
+            phone_verified: true,
             otp: undefined,
-            otpExpiry: undefined
+            otp_expiry: undefined
         });
 
-        if (!updatedRetailer) return null;
+        if (!updated_retailer) return null;
 
         // Generate a temporary JWT token for completion of registration
         const token = jwt.sign(
-            { id: updatedRetailer._id.toString(), phone: updatedRetailer.phone, role: 'retailer' },
+            { id: updated_retailer._id.toString(), phone: updated_retailer.phone, role: 'retailer' },
             process.env.JWT_SECRET!,
             { expiresIn: '1h' } // Short duration for registration process
         );
 
-        return { token, retailer: updatedRetailer };
+        return { token, retailer: updated_retailer };
     }
 
     // Step 3: Complete Registration Profile
-    async completeProfile(retailerId: string, profileData: any): Promise<IRetailer | null> {
-        // Here we expect business details: storeName, ownerName, email, gstin, bankDetails, panCard, address
-        const updatedRetailer = await this.retailerRepository.update(retailerId, {
-            ...profileData,
+    async complete_profile(retailer_id: string, profile_data: any): Promise<IRetailer | null> {
+        const updated_retailer = await this.retailer_repository.update(retailer_id, {
+            ...profile_data,
             status: 'pending' // Still pending until admin verification
         });
 
-        return updatedRetailer;
+        return updated_retailer;
     }
 
     // Login (for returning users)
-    async loginWithOTP(phone: string, otp: string): Promise<{ token: string, retailer: IRetailer } | null> {
-        const result = await this.verifyPhoneOTP(phone, otp);
+    async login_with_otp(phone: string, otp: string): Promise<{ token: string, retailer: IRetailer } | null> {
+        const result = await this.verify_phone_otp(phone, otp);
         if (result) {
             // If they are fully registered, give them a longer-lived token
             if (result.retailer.status === 'active') {
-                const longLivedToken = jwt.sign(
+                const long_lived_token = jwt.sign(
                     { id: result.retailer._id.toString(), role: 'retailer' },
                     process.env.JWT_SECRET || 'locaura_secret_key',
                     { expiresIn: '7d' }
                 );
-                return { token: longLivedToken, retailer: result.retailer };
+                return { token: long_lived_token, retailer: result.retailer };
             }
         }
         return result;

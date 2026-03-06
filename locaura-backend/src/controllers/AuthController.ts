@@ -2,10 +2,10 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 
 export class AuthController {
-    private authService = new AuthService();
+    private auth_service = new AuthService();
 
     // Step 1: Request OTP
-    sendOtp = async (req: Request, res: Response) => {
+    send_otp = async (req: Request, res: Response) => {
         try {
             const { phone } = req.body;
 
@@ -13,7 +13,7 @@ export class AuthController {
                 return res.status(400).json({ success: false, message: 'Phone number is required' });
             }
 
-            await this.authService.sendPhoneOTP(phone);
+            await this.auth_service.send_phone_otp(phone);
 
             res.status(200).json({
                 success: true,
@@ -25,7 +25,7 @@ export class AuthController {
     };
 
     // Step 2: Verify OTP
-    verifyOtp = async (req: Request, res: Response) => {
+    verify_otp = async (req: Request, res: Response) => {
         try {
             const { phone, otp } = req.body;
 
@@ -33,7 +33,7 @@ export class AuthController {
                 return res.status(400).json({ success: false, message: 'Phone and OTP are required' });
             }
 
-            const result = await this.authService.verifyPhoneOTP(phone, otp);
+            const result = await this.auth_service.verify_phone_otp(phone, otp);
 
             if (!result) {
                 return res.status(401).json({ success: false, message: 'Invalid or expired OTP' });
@@ -57,36 +57,44 @@ export class AuthController {
     };
 
     // Step 3: Register Complete Profile
-    completeProfile = async (req: Request, res: Response) => {
+    complete_profile = async (req: Request, res: Response) => {
         try {
-            // Assume the previous verification gave them a JWT and we decoded it to get their retailerId
-            // Or just get the retailerId from headers (for now assume they send it in the body for testing)
-            const { retailerId, storeName, ownerName, email, gstin, bankDetails, panCard, address, businessType } = req.body;
+            const {
+                retailer_id,
+                store_name,
+                owner_name,
+                email,
+                gstin,
+                bank_details,
+                pan_card,
+                address,
+                business_type
+            } = req.body;
 
-            if (!retailerId || !storeName || !gstin) {
+            if (!retailer_id || !store_name || !gstin) {
                 return res.status(400).json({ success: false, message: 'Missing required profile details' });
             }
 
-            const updatedRetailer = await this.authService.completeProfile(retailerId, {
-                storeName,
-                ownerName,
+            const updated_retailer = await this.auth_service.complete_profile(retailer_id, {
+                store_name,
+                owner_name,
                 email,
                 gstin,
-                bankDetails,
-                panCard,
+                bank_details,
+                pan_card,
                 address,
-                businessType,
-                status: 'pending' // Still requires manual verification by Meesho-style admins
+                business_type,
+                status: 'pending'
             });
 
-            if (!updatedRetailer) {
+            if (!updated_retailer) {
                 return res.status(404).json({ success: false, message: 'Retailer not found' });
             }
 
             res.status(200).json({
                 success: true,
                 message: 'Business profile submitted successfully for verification',
-                data: updatedRetailer
+                data: updated_retailer
             });
         } catch (error: any) {
             res.status(500).json({ success: false, message: error.message });

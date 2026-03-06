@@ -2,20 +2,20 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPayment extends Document {
     _id: mongoose.Types.ObjectId;
-    orderId: mongoose.Types.ObjectId;
-    transactionId: string;
+    order_id: mongoose.Types.ObjectId;
+    transaction_id: string;
     amount: number;
-    paymentMethod: 'cod' | 'online';
-    paymentStatus: 'pending' | 'completed' | 'failed';
+    payment_method: 'cod' | 'online';
+    payment_status: 'pending' | 'completed' | 'failed';
 }
 
 const PaymentSchema: Schema = new Schema({
-    _id: mongoose.Types.ObjectId,
-    orderId: { type: mongoose.Types.ObjectId, ref: 'Order' },
-    transactionId: { type: String, required: true },
+    _id: { type: mongoose.Types.ObjectId, auto: true },
+    order_id: { type: mongoose.Types.ObjectId, ref: 'Order' },
+    transaction_id: { type: String, required: true },
     amount: { type: Number, required: true },
-    paymentMethod: { type: String, required: true },
-    paymentStatus: { type: String, required: true }
+    payment_method: { type: String, required: true },
+    payment_status: { type: String, required: true }
 }, { timestamps: true });
 
 export default mongoose.model<IPayment>('Payment', PaymentSchema);

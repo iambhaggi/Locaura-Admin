@@ -4,15 +4,15 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { Logger } from './utils/logger';
-import authRoutes from './routes/auth_routes';
+import auth_routes from './routes/auth_routes';
 
 
 const app = express();
 const port = process.env.PORT || 3000;
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/locaura';
+const mongo_uri = process.env.MONGO_URI || 'mongodb://localhost:27017/locaura';
 
 // Connect to MongoDB
-mongoose.connect(mongoUri)
+mongoose.connect(mongo_uri)
   .then(() => Logger.success('Successfully connected to MongoDB', 'Database'))
   .catch((error) => Logger.error(`Initial MongoDB connection error: ${error}`, 'Database'));
 
@@ -30,7 +30,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // all new routes register here
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', auth_routes);
 
 // Start the server
 app.listen(port, () => {
