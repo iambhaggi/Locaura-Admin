@@ -1,4 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { IAddress, ILocation, AddressSchema, LocationSchema } from './sub-schemas/Address.schema';
+import { IBankDetails, BankDetailsSchema } from './sub-schemas/BankDetails.schema';
+import { IBusinessHour, BusinessHourSchema } from './sub-schemas/BusinessHours.schema';
+import { ISocialLinks, SocialLinksSchema } from './sub-schemas/SocialLinks.schema';
 
 export interface IRetailer extends Document {
     _id: mongoose.Types.ObjectId;
@@ -19,30 +23,14 @@ export interface IRetailer extends Document {
     otp_expiry?: Date;
 
     // contact & social
-    social_links?: {
-        instagram?: string;
-        whatsapp?: string;
-    };
+    social_links?: ISocialLinks;
 
     // location / Pickup Address
-    address?: {
-        street: string;
-        city: string;
-        state: string;
-        zip_code: string;
-        neighborhood: string;
-    };
-    location?: {
-        type: "Point";
-        coordinates: [number, number]; // [Longitude, Latitude]
-    };
+    address?: IAddress;
+    location?: ILocation;
 
     // bank details
-    bank_details?: {
-        account_number: string;
-        ifsc_code: string;
-        account_holder_name: string;
-    };
+    bank_details?: IBankDetails;
 
     // identification & tax
     gstin?: string;
@@ -51,12 +39,7 @@ export interface IRetailer extends Document {
     // business profile
     store_images: string[];
     categories: string[];
-    business_hours: Array<{
-        day: string;
-        open: string;
-        close: string;
-        is_closed: boolean;
-    }>;
+    business_hours: IBusinessHour[];
 
     // status
     is_delivery_available: boolean;
@@ -84,42 +67,20 @@ const RetailerSchema: Schema = new Schema({
     otp: { type: String },
     otp_expiry: { type: Date },
 
-    social_links: {
-        instagram: { type: String },
-        whatsapp: { type: String }
+    social_links: { type: SocialLinksSchema, default: {} },
+    address: { type: AddressSchema, default: {} },
+    location: { type: LocationSchema, default: { type: 'Point', coordinates: [0, 0] } },
+    bank_details: { type: BankDetailsSchema, default: {}, 
+        select: false 
     },
-
-    address: {
-        street: { type: String },
-        city: { type: String },
-        state: { type: String },
-        zip_code: { type: String },
-        neighborhood: { type: String }
-    },
-
-    location: {
-        type: { type: String, enum: ['Point'], default: 'Point' },
-        coordinates: { type: [Number], default: [0, 0] } // [long, lat]
-    },
-
-    bank_details: {
-        account_number: { type: String },
-        ifsc_code: { type: String },
-        account_holder_name: { type: String }
-    },
-
+    
     gstin: { type: String, unique: true, sparse: true },
     pan_card: { type: String, unique: true, sparse: true },
 
     store_images: [{ type: String }],
     categories: [{ type: String }],
 
-    business_hours: [{
-        day: { type: String },
-        open: { type: String },
-        close: { type: String },
-        is_closed: { type: Boolean, default: false }
-    }],
+    business_hours: [BusinessHourSchema],
 
     is_delivery_available: { type: Boolean, default: false },
     status: { 
