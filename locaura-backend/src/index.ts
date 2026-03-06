@@ -2,11 +2,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import mongoose from 'mongoose';
 import { Logger } from './utils/logger';
+import authRoutes from './routes/auth_routes';
 
 
 const app = express();
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 3000;
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/locaura';
+
+// Connect to MongoDB
+mongoose.connect(mongoUri)
+  .then(() => Logger.success('Successfully connected to MongoDB', 'Database'))
+  .catch((error) => Logger.error(`Initial MongoDB connection error: ${error}`, 'Database'));
 
 // Middlewares
 app.use(cors());
@@ -21,6 +29,8 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+// all new routes register here
+app.use('/api/v1/auth', authRoutes);
 
 // Start the server
 app.listen(port, () => {
