@@ -17,7 +17,7 @@ export interface IRetailer extends Document {
     phone: string;
     phone_verified: boolean;
     email_verified: boolean;
-    
+
     // OTP Management
     otp?: string;
     otp_expiry?: Date;
@@ -54,8 +54,8 @@ const RetailerSchema: Schema = new Schema({
     owner_name: { type: String },
     store_name: { type: String, trim: true },
     description: { type: String },
-    business_type: { 
-        type: String, 
+    business_type: {
+        type: String,
         enum: ['Individual', 'Partnership', 'Private Limited', 'Public Limited']
     },
 
@@ -70,12 +70,21 @@ const RetailerSchema: Schema = new Schema({
     social_links: { type: SocialLinksSchema, default: {} },
     address: { type: AddressSchema, default: {} },
     location: { type: LocationSchema, default: { type: 'Point', coordinates: [0, 0] } },
-    bank_details: { type: BankDetailsSchema, default: {}, 
-        select: false 
+    bank_details: {
+        type: BankDetailsSchema, default: {},
+        select: false
     },
-    
-    gstin: { type: String, unique: true, sparse: true },
-    pan_card: { type: String, unique: true, sparse: true },
+
+    gstin: {
+        type: String, unique: true,
+        // sparse: true, Only include documents in this index if they actually have a value for the gstin field
+        sparse: true
+    },
+    pan_card: {
+        type: String, unique: true,
+        // sparse: true, Only include documents in this index if they actually have a value for the pan_card field
+        sparse: true
+    },
 
     store_images: [{ type: String }],
     categories: [{ type: String }],
@@ -83,10 +92,10 @@ const RetailerSchema: Schema = new Schema({
     business_hours: [BusinessHourSchema],
 
     is_delivery_available: { type: Boolean, default: false },
-    status: { 
-        type: String, 
-        enum: ['active', 'inactive', 'pending', 'suspended'], 
-        default: 'pending' 
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'pending', 'suspended'],
+        default: 'pending'
     },
     rating: { type: Number, default: 0 },
     total_reviews: { type: Number, default: 0 }
