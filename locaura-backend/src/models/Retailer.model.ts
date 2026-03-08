@@ -3,6 +3,7 @@ import { IAddress, ILocation, AddressSchema, LocationSchema } from './sub-schema
 import { IBankDetails, BankDetailsSchema } from './sub-schemas/BankDetails.schema';
 import { IBusinessHour, BusinessHourSchema } from './sub-schemas/BusinessHours.schema';
 import { ISocialLinks, SocialLinksSchema } from './sub-schemas/SocialLinks.schema';
+import { BusinessType, RetailerStatus } from '../enums/retailer.enum';
 
 export interface IRetailer extends Document {
     _id: mongoose.Types.ObjectId;
@@ -10,7 +11,7 @@ export interface IRetailer extends Document {
     owner_name?: string;
     store_name?: string;
     description?: string;
-    business_type?: 'Individual' | 'Partnership' | 'Private Limited' | 'Public Limited';
+    business_type?: BusinessType;
 
     // authentication
     email?: string;
@@ -43,7 +44,7 @@ export interface IRetailer extends Document {
 
     // status
     is_delivery_available: boolean;
-    status: 'active' | 'inactive' | 'pending' | 'suspended';
+    status: RetailerStatus;
 
     // performance
     rating: number;
@@ -56,7 +57,7 @@ const RetailerSchema: Schema = new Schema({
     description: { type: String },
     business_type: {
         type: String,
-        enum: ['Individual', 'Partnership', 'Private Limited', 'Public Limited']
+        enum: Object.values(BusinessType)
     },
 
     email: { type: String, unique: true, sparse: true, lowercase: true },
@@ -94,8 +95,8 @@ const RetailerSchema: Schema = new Schema({
     is_delivery_available: { type: Boolean, default: false },
     status: {
         type: String,
-        enum: ['active', 'inactive', 'pending', 'suspended'],
-        default: 'pending'
+        enum: Object.values(RetailerStatus),
+        default: RetailerStatus.PENDING
     },
     rating: { type: Number, default: 0 },
     total_reviews: { type: Number, default: 0 }

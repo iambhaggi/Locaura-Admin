@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BusinessType } from '../enums/retailer.enum';
 
 // Step 1: Request OTP
 export const send_otp_schema = z.object({
@@ -23,7 +24,7 @@ export const complete_profile_schema = z.object({
         email: z.email("Invalid email address").optional(),
         gstin: z.string().min(15, "GSTIN must be 15 characters").max(15, "GSTIN must be 15 characters"),
         pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional(),
-        business_type: z.enum(['Individual', 'Partnership', 'Private Limited', 'Public Limited']).optional(),
+        business_type: z.enum(BusinessType).optional(),
         address: z.object({
             street: z.string().min(1, "Street is required"),
             city: z.string().min(1, "City is required"),

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import { Logger } from '../utils/logger';
+import { RetailerStatus } from '../enums/retailer.enum';
 
 export class AuthController {
     private auth_service = new AuthService();
@@ -85,7 +86,7 @@ export class AuthController {
                 pan_card,
                 address,
                 business_type,
-                status: 'pending'
+                status: RetailerStatus.PENDING
             });
 
             if (!updated_retailer) {

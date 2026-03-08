@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { RetailerRepository } from '../repositories/RetailerRepository';
 import { IRetailer } from '../models/Retailer.model';
 import { Logger } from '../utils/logger';
+import { RetailerStatus } from '../enums/retailer.enum';
 
 export class AuthService {
     private retailer_repository = new RetailerRepository();
@@ -20,7 +21,7 @@ export class AuthService {
                 phone,
                 otp,
                 otp_expiry,
-                status: 'pending'
+                status: RetailerStatus.PENDING
             });
         } else {
             // Update existing retailer with new OTP
@@ -72,7 +73,7 @@ export class AuthService {
     async complete_profile(retailer_id: any, profile_data: any): Promise<IRetailer | null> {
         const updated_retailer = await this.retailer_repository.update(retailer_id, {
             ...profile_data,
-            status: 'pending' // Still pending until admin verification
+            status: RetailerStatus.PENDING // Still pending until admin verification
         });
 
         return updated_retailer;
@@ -83,7 +84,7 @@ export class AuthService {
         const result = await this.verify_phone_otp(phone, otp);
         if (result) {
             // If they are fully registered, give them a longer-lived token
-            if (result.retailer.status === 'active') {
+            if (result.retailer.status === RetailerStatus.ACTIVE) {
                 const long_lived_token = jwt.sign(
                     { id: result.retailer._id.toString(), role: 'retailer' },
                     process.env.JWT_SECRET || 'locaura_secret_key',
