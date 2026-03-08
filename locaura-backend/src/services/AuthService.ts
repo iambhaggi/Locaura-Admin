@@ -69,7 +69,7 @@ export class AuthService {
     }
 
     // Step 3: Complete Registration Profile
-    async complete_profile(retailer_id: string, profile_data: any): Promise<IRetailer | null> {
+    async complete_profile(retailer_id: any, profile_data: any): Promise<IRetailer | null> {
         const updated_retailer = await this.retailer_repository.update(retailer_id, {
             ...profile_data,
             status: 'pending' // Still pending until admin verification

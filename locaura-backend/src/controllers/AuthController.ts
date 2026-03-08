@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
+import { Logger } from '../utils/logger';
 
 export class AuthController {
     private auth_service = new AuthService();
@@ -8,7 +9,7 @@ export class AuthController {
     send_otp = async (req: Request, res: Response) => {
         try {
             const { phone } = req.body;
-
+            Logger.info(`Phone number: ${phone}`, 'AuthController');
             if (!phone) {
                 return res.status(400).json({ success: false, message: 'Phone number is required' });
             }
@@ -58,9 +59,9 @@ export class AuthController {
 
     // Step 3: Register Complete Profile
     complete_profile = async (req: Request, res: Response) => {
+        Logger.info(`User: ${req.user?.id}`, 'AuthController');
         try {
             const {
-                retailer_id,
                 store_name,
                 owner_name,
                 email,
@@ -70,7 +71,7 @@ export class AuthController {
                 address,
                 business_type
             } = req.body;
-
+            const retailer_id = req.user?.id;
             if (!retailer_id || !store_name || !gstin) {
                 return res.status(400).json({ success: false, message: 'Missing required profile details' });
             }

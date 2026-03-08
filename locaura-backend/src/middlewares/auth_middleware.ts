@@ -12,6 +12,7 @@ export const auth_middleware = (req: Request, res: Response, next: NextFunction)
         req.user = decoded as AuthUser;
         next();
     } catch (error) {
-        res.status(401).json({ success: false, message: 'Unauthorized' });
+        console.log(error);
+        res.status(401).json({ success: false, message: 'Unauthorized', error: error });
     }
 }

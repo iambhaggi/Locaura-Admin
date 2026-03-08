@@ -21,6 +21,12 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Global Request Logger
+app.use((req: Request, res: Response, next) => {
+  Logger.info(`${req.method} ${req.originalUrl}`, 'Router');
+  next();
+});
+
 // Basic route
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
