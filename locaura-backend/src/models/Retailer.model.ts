@@ -4,6 +4,7 @@ export interface IRetailer extends Document {
     _id: mongoose.Types.ObjectId;
     // owner & store identity
     owner_name?: string;
+    pan_card?: string;
     
     // authentication
     email?: string;
@@ -19,6 +20,7 @@ export interface IRetailer extends Document {
 
 const RetailerSchema: Schema = new Schema({
     owner_name: { type: String },
+    pan_card: { type: String, sparse: true },
     
     email: { type: String, unique: true, sparse: true, lowercase: true },
     phone: { type: String, required: true, unique: true },

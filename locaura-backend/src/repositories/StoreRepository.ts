@@ -17,4 +17,13 @@ export class StoreRepository {
     async update(store_id: string, update_data: Partial<IStore>): Promise<IStore | null> {
         return await Store.findByIdAndUpdate(store_id, update_data, { new: true });
     }
+
+    async find_by_id_and_owner(store_id: string, owner_id: string): Promise<IStore | null> {
+        return await Store.findOne({ _id: store_id, owner_id });
+    }
+
+    async delete(store_id: string): Promise<boolean> {
+        const result = await Store.findByIdAndDelete(store_id);
+        return !!result;
+    }
 }

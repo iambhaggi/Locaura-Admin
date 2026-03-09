@@ -10,10 +10,22 @@ export class AuthService {
     private owner_repository = new RetailerRepository();
     private store_repository = new StoreRepository();
 
+    // Constant for Play Store review and internal testing
+    private TEST_NUMBERS = [
+        '9999999999', // standard test number
+        '8888888888', // alternate test number
+        '7777777777'  // extra buffer test number
+    ];
+    private STATIC_TEST_OTP = '123456';
+
     // Step 1: Send OTP to Phone
     async send_phone_otp(phone: string): Promise<boolean> {
-        // Generate a 6-digit OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Generate a 6-digit OTP, unless it's a test number
+        const is_test_number = this.TEST_NUMBERS.includes(phone);
+        const otp = is_test_number
+            ? this.STATIC_TEST_OTP
+            : Math.floor(100000 + Math.random() * 900000).toString();
+
         const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
         let owner = await this.owner_repository.find_by_phone(phone);
