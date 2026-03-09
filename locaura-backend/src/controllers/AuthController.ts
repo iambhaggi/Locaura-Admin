@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import { Logger } from '../utils/logger';
-import { RetailerStatus } from '../enums/retailer.enum';
 
 export class AuthController {
     private auth_service = new AuthService();
@@ -46,11 +45,15 @@ export class AuthController {
                 message: 'Phone verified successfully',
                 data: {
                     token: result.token,
-                    retailer: {
-                        id: result.retailer._id,
-                        phone: result.retailer.phone,
-                        status: result.retailer.status
-                    }
+                    owner: {
+                        id: result.owner._id,
+                        phone: result.owner.phone
+                    },
+                    stores: result.stores.map(store => ({
+                        id: store._id,
+                        name: store.store_name,
+                        status: store.status
+                    }))
                 }
             });
         } catch (error: any) {
@@ -62,41 +65,36 @@ export class AuthController {
     complete_profile = async (req: Request, res: Response) => {
         Logger.info(`User: ${req.user?.id}`, 'AuthController');
         try {
+            const owner_id = req.user?.id;
             const {
-                store_name,
+                // Owner / Identity fields
                 owner_name,
                 email,
-                gstin,
-                bank_details,
-                pan_card,
-                address,
-                business_type
+                pan_card
             } = req.body;
-            const retailer_id = req.user?.id;
-            if (!retailer_id || !store_name || !gstin) {
-                return res.status(400).json({ success: false, message: 'Missing required profile details' });
+
+            if (!owner_id) {
+                return res.status(400).json({ success: false, message: 'User ID is missing' });
             }
 
-            const updated_retailer = await this.auth_service.complete_profile(retailer_id, {
-                store_name,
+            const owner_data = {
                 owner_name,
                 email,
-                gstin,
-                bank_details,
-                pan_card,
-                address,
-                business_type,
-                status: RetailerStatus.PENDING
-            });
+                pan_card
+            };
 
-            if (!updated_retailer) {
-                return res.status(404).json({ success: false, message: 'Retailer not found' });
+            const result = await this.auth_service.complete_profile(owner_id, owner_data);
+
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Owner account not found' });
             }
 
             res.status(200).json({
                 success: true,
-                message: 'Business profile submitted successfully for verification',
-                data: updated_retailer
+                message: 'Profile details updated successfully',
+                data: {
+                    owner: result.owner
+                }
             });
         } catch (error: any) {
             res.status(500).json({ success: false, message: error.message });

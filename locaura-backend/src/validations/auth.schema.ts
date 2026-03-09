@@ -19,23 +19,8 @@ export const verify_otp_schema = z.object({
 // Step 3: Complete Profile
 export const complete_profile_schema = z.object({
     body: z.object({
-        store_name: z.string().min(2, "Store Name must be at least 2 characters"),
         owner_name: z.string().min(2, "Owner Name must be at least 2 characters").optional(),
         email: z.email("Invalid email address").optional(),
-        gstin: z.string().min(15, "GSTIN must be 15 characters").max(15, "GSTIN must be 15 characters"),
-        pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional(),
-        business_type: z.enum(BusinessType).optional(),
-        address: z.object({
-            street: z.string().min(1, "Street is required"),
-            city: z.string().min(1, "City is required"),
-            state: z.string().min(1, "State is required"),
-            zip_code: z.string().min(1, "Zip Code is required"),
-            neighborhood: z.string().min(1, "Neighborhood is required").optional()
-        }).optional(),
-        bank_details: z.object({
-            account_number: z.string().min(1, "Account Number is required"),
-            ifsc_code: z.string().min(1, "IFSC Code is required"),
-            account_holder_name: z.string().min(1, "Account Holder Name is required")
-        }).optional()
+        pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional()
     })
 });

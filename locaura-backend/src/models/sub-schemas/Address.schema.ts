@@ -1,27 +1,33 @@
 import { Schema } from 'mongoose';
 
 export interface IAddress {
-    street: string;
+    shop_number?: string; // e.g., Shop 4A, First Floor
+    building_name?: string; // e.g., Ritiik Mall
+    street: string; 
     city: string;
     state: string;
     zip_code: string;
-    neighborhood: string;
-}
-
-export interface ILocation {
-    type: "Point";
-    coordinates: [number, number]; // [Longitude, Latitude]
+    landmark?: string; // e.g., Next to Metro Station
 }
 
 export const AddressSchema = new Schema({
-    street: { type: String },
-    city: { type: String },
-    state: { type: String },
-    zip_code: { type: String },
-    neighborhood: { type: String }
+    shop_number: { type: String },
+    building_name: { type: String },
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    zip_code: { type: String, required: true },
+    landmark: { type: String }
 }, { _id: false });
+
+
+export interface ILocation {
+    type: "Point";
+    coordinates?: [number, number]; // [Longitude, Latitude]
+}
+
 
 export const LocationSchema = new Schema({
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], default: [0, 0] } // [long, lat]
+    coordinates: { type: [Number] } // [long, lat]
 }, { _id: false });
