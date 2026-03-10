@@ -7,13 +7,13 @@ export class StoreService {
     private store_repository = new StoreRepository();
 
     // Step 1: Register New Store
-    // This creates a physical Store linked to an existing Owner
-    async register_store(owner_id: string, store_data: Partial<IStore>): Promise<IStore> {
-        Logger.info(`Registering new store for owner ${owner_id}`, 'StoreService');
+    // This creates a physical Store linked to an existing Retailer
+    async register_store(retailer_id: string, store_data: Partial<IStore>): Promise<IStore> {
+        Logger.info(`Registering new store for retailer ${retailer_id}`, 'StoreService');
 
-        // Create the physical Store linked to this Owner
+        // Create the physical Store linked to this Retailer
         const new_store = await this.store_repository.create({
-            owner_id: owner_id as any,
+            retailer_id: retailer_id as any,
             ...store_data,
             status: RetailerStatus.PENDING // Business starts as pending verification
         });
@@ -21,9 +21,9 @@ export class StoreService {
         return new_store;
     }
 
-    // Get all stores for an owner
-    async get_my_stores(owner_id: string): Promise<IStore[]> {
-        return await this.store_repository.find_by_owner_id(owner_id);
+    // Get all stores for an retailer
+    async get_my_stores(retailer_id: string): Promise<IStore[]> {
+        return await this.store_repository.find_by_retailer_id(retailer_id);
     }
 
     // Get a specific store
@@ -32,9 +32,9 @@ export class StoreService {
     }
 
     // Update a store (with ownership check)
-    async update_store(store_id: string, owner_id: string, update_data: Partial<IStore>): Promise<IStore | null> {
+    async update_store(store_id: string, retailer_id: string, update_data: Partial<IStore>): Promise<IStore | null> {
         // First verify this user actually owns this store
-        const store = await this.store_repository.find_by_id_and_owner(store_id, owner_id);
+        const store = await this.store_repository.find_by_id_and_retailer(store_id, retailer_id);
         if (!store) {
             throw new Error('Store not found or you do not have permission to update it');
         }
@@ -43,9 +43,9 @@ export class StoreService {
     }
 
     // Delete a store (with ownership check)
-    async delete_store(store_id: string, owner_id: string): Promise<boolean> {
+    async delete_store(store_id: string, retailer_id: string): Promise<boolean> {
         // First verify this user actually owns this store
-        const store = await this.store_repository.find_by_id_and_owner(store_id, owner_id);
+        const store = await this.store_repository.find_by_id_and_retailer(store_id, retailer_id);
         if (!store) {
             throw new Error('Store not found or you do not have permission to delete it');
         }

@@ -10,11 +10,11 @@ export class ProductController {
     // POST /api/v1/stores/:store_id/products
     public create_product = async (req: Request, res: Response): Promise<void> => {
         try {
-            const ownerId = req.user?.id as string; // Assumes auth_middleware is attached
+            const retailerId = req.user?.id as string; // Assumes auth_middleware is attached
             const storeId = req.params.store_id as string;
             const productData = req.body;
 
-            const product = await this.productService.create_product(ownerId, storeId, productData);
+            const product = await this.productService.create_product(retailerId, storeId, productData);
             res.status(201).json({ success: true, message: 'Product created successfully', data: product });
         } catch (error: any) {
             if (error.message === 'UNAUTHORIZED_STORE_ACCESS') {
@@ -70,12 +70,12 @@ export class ProductController {
     // PUT /api/v1/stores/:storeId/products/:productId
     public update_product = async (req: Request, res: Response): Promise<void> => {
         try {
-            const ownerId = req.user?.id as string;
+            const retailerId = req.user?.id as string;
             const storeId = req.params.storeId as string;
             const productId = req.params.productId as string;
             const updateData = req.body;
 
-            const product = await this.productService.update_product(ownerId, storeId, productId, updateData);
+            const product = await this.productService.update_product(retailerId, storeId, productId, updateData);
             res.status(200).json({ success: true, message: 'Product updated successfully', data: product });
         } catch (error: any) {
             if (error.message === 'UNAUTHORIZED_STORE_ACCESS') {
@@ -91,11 +91,11 @@ export class ProductController {
     // DELETE /api/v1/stores/:storeId/products/:productId
     public delete_product = async (req: Request, res: Response): Promise<void> => {
         try {
-            const ownerId = req.user?.id as string;
+            const retailerId = req.user?.id as string;
             const storeId = req.params.storeId as string;
             const productId = req.params.productId as string;
 
-            await this.productService.delete_product(ownerId, storeId, productId);
+            await this.productService.delete_product(retailerId, storeId, productId);
             res.status(200).json({ success: true, message: 'Product deleted successfully' });
         } catch (error: any) {
             if (error.message === 'UNAUTHORIZED_STORE_ACCESS') {

@@ -7,7 +7,7 @@ import { Logger } from '../utils/logger';
 import { RetailerStatus } from '../enums/retailer.enum';
 
 export class AuthService {
-    private owner_repository = new RetailerRepository();
+    private retailer_repository = new RetailerRepository();
     private store_repository = new StoreRepository();
 
     // Constant for Play Store review and internal testing
@@ -28,18 +28,18 @@ export class AuthService {
 
         const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-        let owner = await this.owner_repository.find_by_phone(phone);
+        let retailer = await this.retailer_repository.find_by_phone(phone);
 
-        if (!owner) {
+        if (!retailer) {
             // Initiate partial registration
-            owner = await this.owner_repository.create({
+            retailer = await this.retailer_repository.create({
                 phone,
                 otp,
                 otp_expiry
             });
         } else {
-            // Update existing owner with new OTP
-            await this.owner_repository.update(owner._id.toString(), {
+            // Update existing retailer with new OTP
+            await this.retailer_repository.update(retailer._id.toString(), {
                 otp,
                 otp_expiry
             });
@@ -52,50 +52,50 @@ export class AuthService {
     }
 
     // Step 2: Verify Phone OTP
-    async verify_phone_otp(phone: string, otp: string): Promise<{ token: string, owner: IRetailer, stores: IStore[] } | null> {
-        const owner = await this.owner_repository.find_by_phone(phone);
+    async verify_phone_otp(phone: string, otp: string): Promise<{ token: string, retailer: IRetailer, stores: IStore[] } | null> {
+        const retailer = await this.retailer_repository.find_by_phone(phone);
 
-        if (!owner || !owner.otp || !owner.otp_expiry) {
+        if (!retailer || !retailer.otp || !retailer.otp_expiry) {
             return null;
         }
 
         // Check if OTP matches and is not expired
-        if (owner.otp !== otp || owner.otp_expiry < new Date()) {
+        if (retailer.otp !== otp || retailer.otp_expiry < new Date()) {
             return null;
         }
 
         // Mark phone as verified and clear OTP
-        const updated_owner = await this.owner_repository.update(owner._id.toString(), {
+        const updated_retailer = await this.retailer_repository.update(retailer._id.toString(), {
             phone_verified: true,
             otp: undefined,
             otp_expiry: undefined
         });
 
-        if (!updated_owner) return null;
+        if (!updated_retailer) return null;
 
         // Fetch user's stores if any exist yet
-        const stores = await this.store_repository.find_by_owner_id(updated_owner._id.toString());
+        const stores = await this.store_repository.find_by_retailer_id(updated_retailer._id.toString());
 
         // Generate a temporary JWT token for completion of registration or regular login
         const token = jwt.sign(
-            { id: updated_owner._id.toString(), phone: updated_owner.phone, role: 'retailer' },
+            { id: updated_retailer._id.toString(), phone: updated_retailer.phone, role: 'retailer' },
             process.env.JWT_SECRET!,
             { expiresIn: stores.length > 0 ? '7d' : '1h' } // Give 7 days if they have stores, otherwise 1 hour to complete profile
         );
 
-        return { token, owner: updated_owner, stores };
+        return { token, retailer: updated_retailer, stores };
     }
 
     // Step 3: Complete Registration Profile 
-    // This updates their owner details
-    async complete_profile(owner_id: any, owner_data: Partial<IRetailer>): Promise<{ owner: IRetailer } | null> {
+    // This updates their retailer details
+    async complete_profile(retailer_id: any, retailer_data: Partial<IRetailer>): Promise<{ retailer: IRetailer } | null> {
 
-        // 1. Update the Owner (adding email, owner_name, pan_card, etc)
-        const updated_owner = await this.owner_repository.update(owner_id, owner_data);
-        if (!updated_owner) return null;
+        // 1. Update the Retailer (adding email, retailer_name, pan_card, etc)
+        const updated_retailer = await this.retailer_repository.update(retailer_id, retailer_data);
+        if (!updated_retailer) return null;
 
         return {
-            owner: updated_owner
+            retailer: updated_retailer
         };
     }
 }

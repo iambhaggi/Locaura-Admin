@@ -5,7 +5,7 @@ import { auth_middleware } from '../middlewares/auth_middleware';
 const router = Router({ mergeParams: true }); // Important: mergeParams allows accessing :storeId from the parent router
 const productController = new ProductController();
 
-// All product routes require authentication (for now, assuming RetailerOwners manage products)
+// All product routes require authentication (for now, assuming Retailers manage products)
 router.use(auth_middleware);
 
 // Routes for /api/v1/stores/:store_id/products

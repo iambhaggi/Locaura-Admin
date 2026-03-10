@@ -9,9 +9,9 @@ export const register_store_schema = z.object({
         business_type: z.enum(BusinessType).optional(),
 
         // Contact details
-        owner_name: z.string().min(2, "Owner Name must be at least 2 characters"),
-        owner_phone: z.string().min(10, "Owner Phone must be at least 10 characters"),
-        owner_email: z.email("Invalid email address"),
+        retailer_name: z.string().min(2, "Retailer Name must be at least 2 characters"),
+        retailer_phone: z.string().min(10, "Retailer Phone must be at least 10 characters"),
+        retailer_email: z.email("Invalid email address"),
 
         // Location / Address
         address: z.object({
@@ -51,9 +51,9 @@ export const update_store_schema = z.object({
         description: z.string().optional(),
         business_type: z.enum(BusinessType).optional(),
 
-        owner_name: z.string().min(2, "Owner Name must be at least 2 characters").optional(),
-        owner_phone: z.string().min(10, "Owner Phone must be at least 10 characters").optional(),
-        owner_email: z.email("Invalid email address").optional(),
+        retailer_name: z.string().min(2, "Retailer Name must be at least 2 characters").optional(),
+        retailer_phone: z.string().min(10, "Retailer Phone must be at least 10 characters").optional(),
+        retailer_email: z.email("Invalid email address").optional(),
 
         address: z.object({
             street: z.string().min(1, "Street is required"),

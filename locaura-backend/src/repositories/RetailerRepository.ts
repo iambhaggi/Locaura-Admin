@@ -13,9 +13,9 @@ export class RetailerRepository {
         return await Retailer.findById(id);
     }
 
-    async create(owner_data: Partial<IRetailer>): Promise<IRetailer> {
-        const owner = new Retailer(owner_data);
-        return await owner.save();
+    async create(retailer_data: Partial<IRetailer>): Promise<IRetailer> {
+        const retailer = new Retailer(retailer_data);
+        return await retailer.save();
     }
 
     async update(id: string, update_data: Partial<IRetailer>): Promise<IRetailer | null> {

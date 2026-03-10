@@ -17,7 +17,7 @@ router.post(
     store_controller.register_store
 );
 
-// Get all stores for the logged in owner
+// Get all stores for the logged in retailer
 router.get(
     '/me',
     store_controller.get_my_stores

@@ -11,9 +11,9 @@ export class ProductService {
         this.storeRepository = new StoreRepository(); // Ensures the store exists and belongs to the retailer
     }
 
-    async create_product(ownerId: string, storeId: string, productData: Partial<IProduct>): Promise<IProduct> {
+    async create_product(retailerId: string, storeId: string, productData: Partial<IProduct>): Promise<IProduct> {
         // 1. Verify the store exists
-        const store = await this.storeRepository.find_by_id_and_owner(storeId, ownerId);
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
         if (!store) {
             throw new Error('UNAUTHORIZED_STORE_ACCESS');
         }
@@ -39,9 +39,9 @@ export class ProductService {
         return product;
     }
 
-    async update_product(ownerId: string, storeId: string, productId: string, updateData: Partial<IProduct>) {
+    async update_product(retailerId: string, storeId: string, productId: string, updateData: Partial<IProduct>) {
         // 1. Verify ownership of the store
-        const store = await this.storeRepository.find_by_id_and_owner(storeId, ownerId);
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
         if (!store) {
             throw new Error('UNAUTHORIZED_STORE_ACCESS');
         }
@@ -52,9 +52,9 @@ export class ProductService {
         return updated;
     }
 
-    async delete_product(ownerId: string, storeId: string, productId: string) {
+    async delete_product(retailerId: string, storeId: string, productId: string) {
         // 1. Verify ownership
-        const store = await this.storeRepository.find_by_id_and_owner(storeId, ownerId);
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
         if (!store) {
             throw new Error('UNAUTHORIZED_STORE_ACCESS');
         }

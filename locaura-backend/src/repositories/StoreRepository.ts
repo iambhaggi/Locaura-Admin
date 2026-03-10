@@ -1,8 +1,8 @@
 import Store, { IStore } from '../models/Store.model';
 
 export class StoreRepository {
-    async find_by_owner_id(owner_id: string): Promise<IStore[]> {
-        return await Store.find({ owner_id });
+    async find_by_retailer_id(retailer_id: string): Promise<IStore[]> {
+        return await Store.find({ retailer_id });
     }
 
     async find_by_store_id(store_id: string): Promise<IStore | null> {
@@ -18,8 +18,8 @@ export class StoreRepository {
         return await Store.findByIdAndUpdate(store_id, update_data, { new: true });
     }
 
-    async find_by_id_and_owner(store_id: string, owner_id: string): Promise<IStore | null> {
-        return await Store.findOne({ _id: store_id, owner_id });
+    async find_by_id_and_retailer(store_id: string, retailer_id: string): Promise<IStore | null> {
+        return await Store.findOne({ _id: store_id, retailer_id });
     }
 
     async delete(store_id: string): Promise<boolean> {

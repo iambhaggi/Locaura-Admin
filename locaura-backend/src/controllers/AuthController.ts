@@ -46,8 +46,8 @@ export class AuthController {
                 data: {
                     token: result.token,
                     retailer: {
-                        id: result.owner._id,
-                        phone: result.owner.phone
+                        id: result.retailer._id,
+                        phone: result.retailer.phone
                     },
                     stores: result.stores.map(store => ({
                         id: store._id,
@@ -65,35 +65,35 @@ export class AuthController {
     complete_profile = async (req: Request, res: Response) => {
         Logger.info(`User: ${req.user?.id}`, 'AuthController');
         try {
-            const owner_id = req.user?.id;
+            const retailer_id = req.user?.id;
             const {
-                // Owner / Identity fields
-                owner_name,
+                // Retailer / Identity fields
+                retailer_name,
                 email,
                 pan_card
             } = req.body;
 
-            if (!owner_id) {
+            if (!retailer_id) {
                 return res.status(400).json({ success: false, message: 'User ID is missing' });
             }
 
-            const owner_data = {
-                owner_name,
+            const retailer_data = {
+                retailer_name,
                 email,
                 pan_card
             };
 
-            const result = await this.auth_service.complete_profile(owner_id, owner_data);
+            const result = await this.auth_service.complete_profile(retailer_id, retailer_data);
 
             if (!result) {
-                return res.status(404).json({ success: false, message: 'Owner account not found' });
+                return res.status(404).json({ success: false, message: 'Retailer account not found' });
             }
 
             res.status(200).json({
                 success: true,
                 message: 'Profile details updated successfully',
                 data: {
-                    retailer: result.owner
+                    retailer: result.retailer
                 }
             });
         } catch (error: any) {

@@ -7,7 +7,7 @@ import { BusinessType, RetailerStatus } from '../enums/retailer.enum';
 
 export interface IStore extends Document {
     _id: mongoose.Types.ObjectId;
-    owner_id: mongoose.Types.ObjectId;
+    retailer_id: mongoose.Types.ObjectId;
     
     // shop identity
     store_name: string;
@@ -15,9 +15,9 @@ export interface IStore extends Document {
     business_type?: BusinessType;
 
     // contact & social
-    owner_name: string;
-    owner_phone: string;
-    owner_email: string;
+    retailer_name: string;
+    retailer_phone: string;
+    retailer_email: string;
     social_links?: ISocialLinks;
 
     // location / Pickup Address
@@ -46,7 +46,7 @@ export interface IStore extends Document {
 }
 
 const StoreSchema: Schema = new Schema({
-    owner_id: { type: mongoose.Types.ObjectId, ref: 'Retailer', required: true, index: true },
+    retailer_id: { type: mongoose.Types.ObjectId, ref: 'Retailer', required: true, index: true },
     
     store_name: { type: String, trim: true, required: true },
     description: { type: String },
@@ -54,9 +54,9 @@ const StoreSchema: Schema = new Schema({
         type: String,
         enum: Object.values(BusinessType)
     },
-    owner_name: { type: String, required: true },
-    owner_phone: { type: String, required: true },
-    owner_email: { type: String, required: true },
+    retailer_name: { type: String, required: true },
+    retailer_phone: { type: String, required: true },
+    retailer_email: { type: String, required: true },
     social_links: { type: SocialLinksSchema, default: {} },
     address: { type: AddressSchema, default: {} },
     location: { type: LocationSchema, default: { type: 'Point', coordinates: [0, 0] } },
