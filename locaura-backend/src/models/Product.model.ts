@@ -17,7 +17,7 @@ export interface IProductVariant {
 
 export interface IProduct extends Document {
     _id: mongoose.Types.ObjectId;
-    category_id: mongoose.Types.ObjectId;
+    category_id?: mongoose.Types.ObjectId;
     store_id: mongoose.Types.ObjectId; 
 
     name: string;

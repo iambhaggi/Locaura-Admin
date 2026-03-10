@@ -19,8 +19,10 @@ export const verify_otp_schema = z.object({
 // Step 3: Complete Profile
 export const complete_profile_schema = z.object({
     body: z.object({
-        retailer_name: z.string().min(2, "Retailer Name must be at least 2 characters").optional(),
-        email: z.email("Invalid email address").optional(),
-        pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional()
+        retailer_name: z.string().min(2, "Retailer Name must be at least 2 characters"),
+        email: z.email("Invalid email address"),
+        pan_card: z.string()
+            .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN Card format. Must be 5 uppercase letters, 4 numbers, 1 uppercase letter.")
+            .optional()
     })
 });

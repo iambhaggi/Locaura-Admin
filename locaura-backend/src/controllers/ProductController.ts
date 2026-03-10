@@ -71,8 +71,8 @@ export class ProductController {
     public update_product = async (req: Request, res: Response): Promise<void> => {
         try {
             const retailerId = req.user?.id as string;
-            const storeId = req.params.storeId as string;
-            const productId = req.params.productId as string;
+            const storeId = req.params.store_id as string;
+            const productId = req.params.product_id as string;
             const updateData = req.body;
 
             const product = await this.productService.update_product(retailerId, storeId, productId, updateData);
@@ -92,8 +92,8 @@ export class ProductController {
     public delete_product = async (req: Request, res: Response): Promise<void> => {
         try {
             const retailerId = req.user?.id as string;
-            const storeId = req.params.storeId as string;
-            const productId = req.params.productId as string;
+            const storeId = req.params.store_id as string;
+            const productId = req.params.product_id as string;
 
             await this.productService.delete_product(retailerId, storeId, productId);
             res.status(200).json({ success: true, message: 'Product deleted successfully' });

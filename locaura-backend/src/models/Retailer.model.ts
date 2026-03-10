@@ -3,11 +3,11 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IRetailer extends Document {
     _id: mongoose.Types.ObjectId;
     // retailer & store identity
-    retailer_name?: string;
+    retailer_name: string;
     pan_card?: string;
     
     // authentication
-    email?: string;
+    email: string;
     phone: string;
     phone_verified: boolean;
     email_verified: boolean;

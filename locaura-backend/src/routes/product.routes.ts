@@ -8,7 +8,7 @@ const productController = new ProductController();
 // All product routes require authentication (for now, assuming Retailers manage products)
 router.use(auth_middleware);
 
-// Routes for /api/v1/stores/:store_id/products
+// Routes for /api/v1/stores/:store_id/product
 router.route('/')
     .post(productController.create_product)
     .get(productController.get_products_by_store_id);
