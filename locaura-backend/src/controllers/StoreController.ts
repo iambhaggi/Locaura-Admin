@@ -45,7 +45,7 @@ export class StoreController {
 
             res.status(200).json({
                 success: true,
-                data: { stores }
+                data: { count:stores.length,stores }
             });
         } catch (error: any) {
             Logger.error(`Get my stores error: ${error.message}`, 'StoreController');

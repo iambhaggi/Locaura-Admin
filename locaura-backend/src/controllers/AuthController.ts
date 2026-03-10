@@ -45,7 +45,7 @@ export class AuthController {
                 message: 'Phone verified successfully',
                 data: {
                     token: result.token,
-                    owner: {
+                    retailer: {
                         id: result.owner._id,
                         phone: result.owner.phone
                     },
@@ -93,7 +93,7 @@ export class AuthController {
                 success: true,
                 message: 'Profile details updated successfully',
                 data: {
-                    owner: result.owner
+                    retailer: result.owner
                 }
             });
         } catch (error: any) {
