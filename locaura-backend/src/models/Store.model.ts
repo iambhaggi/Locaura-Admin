@@ -11,8 +11,11 @@ export interface IStore extends Document {
     
     // shop identity
     store_name: string;
+    slug?: string;
     description?: string;
     business_type?: BusinessType;
+    logo_url?: string;
+    banner_url?: string;
 
     // contact & social
     retailer_name: string;
@@ -36,9 +39,16 @@ export interface IStore extends Document {
     categories: string[];
     business_hours: IBusinessHour[];
 
+    // delivery & order config
+    delivery_radius_km: number;
+    min_order_amount: number;
+    delivery_fee: number;
+
     // status
     is_delivery_available: boolean;
+    is_active: boolean;
     status: RetailerStatus;
+    is_open_now?: boolean;// to handle real-time business hours
 
     // performance
     rating: number;
@@ -49,11 +59,14 @@ const StoreSchema: Schema = new Schema({
     retailer_id: { type: mongoose.Types.ObjectId, ref: 'Retailer', required: true, index: true },
     
     store_name: { type: String, trim: true, required: true },
+    slug: { type: String, trim: true, lowercase: true },
     description: { type: String },
     business_type: {
         type: String,
         enum: Object.values(BusinessType)
     },
+    logo_url: { type: String },
+    banner_url: { type: String },
     retailer_name: { type: String, required: true },
     retailer_phone: { type: String, required: true },
     retailer_email: { type: String, required: true },
@@ -76,7 +89,12 @@ const StoreSchema: Schema = new Schema({
 
     business_hours: [BusinessHourSchema],
 
+    delivery_radius_km: { type: Number, default: 10 },
+    min_order_amount: { type: Number, default: 0 },
+    delivery_fee: { type: Number, default: 0 },
+
     is_delivery_available: { type: Boolean, default: false },
+    is_active: { type: Boolean, default: true, index: true },
     status: {
         type: String,
         enum: Object.values(RetailerStatus),
@@ -88,6 +106,7 @@ const StoreSchema: Schema = new Schema({
 
 // CRITICAL: Index for proximity search
 StoreSchema.index({ location: '2dsphere' });
+StoreSchema.index({ slug: 1, retailer_id: 1 }, { unique: true, sparse: true });
 StoreSchema.index({ store_name: 'text', description: 'text' });
 
 export default mongoose.model<IStore>('Store', StoreSchema);
