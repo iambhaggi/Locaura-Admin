@@ -4,6 +4,7 @@ export interface IOrder extends Document {
     _id: mongoose.Types.ObjectId;
     user_id: mongoose.Types.ObjectId;
     retailer_id: mongoose.Types.ObjectId;
+    store_id: mongoose.Types.ObjectId;
     product_id: mongoose.Types.ObjectId;
     quantity: number;
     total_price: number;
@@ -16,6 +17,7 @@ const OrderSchema: Schema = new Schema({
     _id: { type: mongoose.Types.ObjectId, auto: true },
     user_id: { type: mongoose.Types.ObjectId, ref: 'User' },
     retailer_id: { type: mongoose.Types.ObjectId, ref: 'Retailer' },
+    store_id: { type: mongoose.Types.ObjectId, ref: 'Store' },
     product_id: { type: mongoose.Types.ObjectId, ref: 'Product' },
     quantity: { type: Number, required: true },
     total_price: { type: Number, required: true },
