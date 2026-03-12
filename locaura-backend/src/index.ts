@@ -8,6 +8,8 @@ import auth_routes from './Retailer/routes/auth_routes';
 import store_routes from './Retailer/routes/store.routes';
 import product_routes from './Retailer/routes/product.routes';
 import consumer_auth_routes from './Consumer/routes/auth_routes';
+import consumer_cart_routes from './Consumer/routes/cart_routes';
+import consumer_checkout_routes from './Consumer/routes/checkout_routes';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -47,6 +49,8 @@ app.use('/api/v1/stores', store_routes); // Retailer stores
 app.use('/api/v1/stores/:store_id/products', product_routes); // Retailer products
 
 app.use('/api/v1/consumers/auth', consumer_auth_routes); // Consumer auth
+app.use('/api/v1/consumers/cart', consumer_cart_routes); // Consumer Cart
+app.use('/api/v1/consumers/checkout', consumer_checkout_routes); // Consumer Checkout
 
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

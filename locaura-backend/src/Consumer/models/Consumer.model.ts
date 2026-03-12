@@ -15,6 +15,16 @@ export interface IConsumerAddress {
     };
 }
 
+export interface ICartItem {
+    variant_id: mongoose.Types.ObjectId;
+    quantity: number;
+}
+
+export interface IConsumerCart {
+    store_id?: mongoose.Types.ObjectId;
+    items: ICartItem[];
+}
+
 export interface IConsumer extends Document {
     _id: mongoose.Types.ObjectId;
     phone: string;
@@ -26,6 +36,7 @@ export interface IConsumer extends Document {
     email?: string;
     
     addresses: IConsumerAddress[];
+    cart: IConsumerCart;
     
     status: 'active' | 'suspended' | 'deleted';
     
@@ -50,6 +61,22 @@ const AddressSchema = new Schema<IConsumerAddress>(
     { _id: true }
 );
 
+const CartItemSchema = new Schema<ICartItem>(
+    {
+        variant_id: { type: Schema.Types.ObjectId, ref: 'ChildProduct', required: true },
+        quantity: { type: Number, required: true, min: 1 }
+    },
+    { _id: false }
+);
+
+const CartSchema = new Schema<IConsumerCart>(
+    {
+        store_id: { type: Schema.Types.ObjectId, ref: 'Store' },
+        items: { type: [CartItemSchema], default: () => [] }
+    },
+    { _id: false }
+);
+
 const ConsumerSchema = new Schema<IConsumer>(
     {
         phone: {
@@ -72,6 +99,7 @@ const ConsumerSchema = new Schema<IConsumer>(
         },
 
         addresses: { type: [AddressSchema], default: () => [] },
+        cart: { type: CartSchema, default: () => ({ items: [] }) },
 
         status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
     },
