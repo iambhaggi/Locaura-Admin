@@ -41,14 +41,27 @@ export class ProductService {
             throw new Error('PARENT_PRODUCT_NOT_FOUND_OR_UNAUTHORIZED');
         }
 
-        // 3. Set associated IDs
+        // 3. Set associated IDs and derive missing fields
         variantData.parent_id = parentProduct._id;
         variantData.store_id = store._id;
         variantData.retailer_id = store.retailer_id;
         
-        // Inherit categories from parent if they exist
-        if (parentProduct.categories && parentProduct.categories.length > 0) {
+        // Derive Price if not provided
+        if (!variantData.price) {
+            variantData.price = parentProduct.base_price;
+        }
+
+        // Inherit Categories if not provided
+        if (!variantData.categories || variantData.categories.length === 0) {
             variantData.categories = parentProduct.categories;
+        }
+
+        // Derive SKU if missing: {parent-slug}-{color}-{size}
+        if (!variantData.sku) {
+            const parts = [parentProduct.slug];
+            if (variantData.color) parts.push(variantData.color.toLowerCase().replace(/\s+/g, '-'));
+            if (variantData.size) parts.push(variantData.size.toLowerCase().replace(/\s+/g, '-'));
+            variantData.sku = parts.join('-');
         }
 
         return await this.productRepository.create_variant(variantData);

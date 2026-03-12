@@ -170,7 +170,7 @@ const ChildProductSchema = new Schema<IChildProduct>(
 
         sku: { type: String, required: true, trim: true },
         barcode: { type: String, trim: true },
-        variant_label: { type: String, required: true, default: '' },
+        variant_label: { type: String, default: '' },
 
         price: { type: Number, required: true, min: 0 },
         compare_at_price: { type: Number, min: 0 },
