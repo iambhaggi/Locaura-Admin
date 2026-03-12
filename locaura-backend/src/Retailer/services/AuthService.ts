@@ -3,7 +3,7 @@ import { RetailerRepository } from '../repositories/RetailerRepository';
 import { StoreRepository } from '../repositories/StoreRepository';
 import { IRetailer } from '../models/Retailer.model';
 import { IStore } from '../models/Store.model';
-import { Logger } from '../utils/logger';
+import { Logger } from '../../utils/logger';
 import { RetailerStatus } from '../enums/retailer.enum';
 
 export class AuthService {

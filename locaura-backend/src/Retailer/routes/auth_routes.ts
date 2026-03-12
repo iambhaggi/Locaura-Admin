@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/AuthController';
 import { validate_schema } from '../middlewares/validate_schema';
-import { send_otp_schema, verify_otp_schema, complete_profile_schema } from '../validations/auth.schema';
+import { send_otp_schema, verify_otp_schema, complete_profile_schema } from '../../validations/auth.schema';
 import { auth_middleware } from '../middlewares/auth_middleware';
 
 const auth_router = Router();

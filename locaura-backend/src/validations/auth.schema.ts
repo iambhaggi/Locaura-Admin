@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BusinessType } from '../enums/retailer.enum';
+import { BusinessType } from '../Retailer/enums/retailer.enum';
 
 // Step 1: Request OTP
 export const send_otp_schema = z.object({

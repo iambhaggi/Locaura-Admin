@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
-import { Logger } from '../utils/logger';
+import { Logger } from '../../utils/logger';
 
 export const validate_schema = (schema: z.ZodSchema) => {
     Logger.info(`Validating schema`, 'ValidateSchema');

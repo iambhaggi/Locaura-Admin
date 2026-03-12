@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BusinessType } from '../enums/retailer.enum';
+import { BusinessType } from '../Retailer/enums/retailer.enum';
 
 export const register_store_schema = z.object({
     body: z.object({

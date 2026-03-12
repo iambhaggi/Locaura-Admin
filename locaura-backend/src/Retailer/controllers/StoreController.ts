@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { StoreService } from '../services/StoreService';
-import { Logger } from '../utils/logger';
+import { Logger } from '../../utils/logger';
 
 export class StoreController {
     private store_service = new StoreService();

@@ -1,7 +1,7 @@
 import { StoreRepository } from '../repositories/StoreRepository';
 import { IStore } from '../models/Store.model';
 import { RetailerStatus } from '../enums/retailer.enum';
-import { Logger } from '../utils/logger';
+import { Logger } from '../../utils/logger';
 
 export class StoreService {
     private store_repository = new StoreRepository();

@@ -4,9 +4,10 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { Logger } from './utils/logger';
-import auth_routes from './routes/auth_routes';
-import store_routes from './routes/store.routes';
-import product_routes from './routes/product.routes';
+import auth_routes from './Retailer/routes/auth_routes';
+import store_routes from './Retailer/routes/store.routes';
+import product_routes from './Retailer/routes/product.routes';
+import consumer_auth_routes from './Consumer/routes/auth_routes';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -41,9 +42,11 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // all new routes register here
-app.use('/api/v1/auth', auth_routes);
-app.use('/api/v1/stores', store_routes);
-app.use('/api/v1/stores/:store_id/products', product_routes);
+app.use('/api/v1/auth', auth_routes); // Retailer auth
+app.use('/api/v1/stores', store_routes); // Retailer stores
+app.use('/api/v1/stores/:store_id/products', product_routes); // Retailer products
+
+app.use('/api/v1/consumers/auth', consumer_auth_routes); // Consumer auth
 
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

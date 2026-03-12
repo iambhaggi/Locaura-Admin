@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { StoreController } from '../controllers/StoreController';
 import { validate_schema } from '../middlewares/validate_schema';
-import { register_store_schema, update_store_schema } from '../validations/store.schema';
+import { register_store_schema, update_store_schema } from '../../validations/store.schema';
 import { auth_middleware } from '../middlewares/auth_middleware';
 
 const router = Router();
