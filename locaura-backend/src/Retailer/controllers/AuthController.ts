@@ -45,10 +45,7 @@ export class AuthController {
                 message: 'Phone verified successfully',
                 data: {
                     token: result.token,
-                    retailer: {
-                        id: result.retailer._id,
-                        phone: result.retailer.phone
-                    },
+                    retailer: result.retailer,
                     stores: result.stores.map(store => ({
                         id: store._id,
                         name: store.store_name,
