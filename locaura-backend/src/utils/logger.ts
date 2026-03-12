@@ -1,26 +1,44 @@
 import chalk from 'chalk';
 
 export class Logger {
-  static info(message: string, context?: any) {
-    const ctx = context ? chalk.cyan(`[${context}] `) : '';
-    console.log(chalk.blue('ℹ INFO: ') + ctx + message);
+  static info(message: any, context?: string) {
+    const args: any[] = [chalk.blue('ℹ INFO:')];
+    if (context) args.push(chalk.cyan(`[${context}]`));
+    args.push(message);
+    console.log(...args);
   }
 
-  static success(message: string, context?: any) {
-    const ctx = context ? chalk.cyan(`[${context}] `) : '';
-    console.log(chalk.green('✔ SUCCESS: ') + ctx + message);
+  static success(message: any, context?: string) {
+    const args: any[] = [chalk.green('✔ SUCCESS:')];
+    if (context) args.push(chalk.cyan(`[${context}]`));
+    args.push(message);
+    console.log(...args);
   }
 
-  static warn(message: string, context?: any) {
-    const ctx = context ? chalk.cyan(`[${context}] `) : '';
-    console.warn(chalk.yellow('⚠ WARN: ') + ctx + message);
+  static warn(message: any, context?: string) {
+    const args: any[] = [chalk.yellow('⚠ WARN:')];
+    if (context) args.push(chalk.cyan(`[${context}]`));
+    args.push(message);
+    console.warn(...args);
   }
 
-  static error(message: string, error?: any, context?: any) {
-    const ctx = context ? chalk.cyan(`[${context}] `) : '';
-    console.error(chalk.red('✖ ERROR: ') + ctx + message);
-    if (error) {
-      console.error(chalk.red(error.stack || error));
+  static error(message: any, error?: any, context?: string) {
+    const args: any[] = [chalk.red('✖ ERROR:')];
+
+    // Auto-detect if second argument is context (string) or an error object.
+    let err = error;
+    let ctx = context;
+    if (typeof error === 'string' && context === undefined) {
+      ctx = error;
+      err = undefined;
+    }
+
+    if (ctx) args.push(chalk.cyan(`[${ctx}]`));
+    args.push(message);
+    console.error(...args);
+
+    if (err) {
+      console.error(chalk.red(typeof err === 'object' && err.stack ? err.stack : err));
     }
   }
 }

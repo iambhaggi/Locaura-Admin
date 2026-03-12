@@ -11,7 +11,7 @@ export const auth_middleware = (req: Request, res: Response, next: NextFunction)
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
         req.user = decoded as AuthUser;
-        console.log("User: ", req.user);
+        Logger.info(req.user,"User");
         next();
     } catch (error) {
         Logger.error("Error in auth_middleware: ", error);
