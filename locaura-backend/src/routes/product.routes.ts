@@ -18,4 +18,14 @@ router.route('/:product_id')
     .put(productController.update_product)
     .delete(productController.delete_product);
 
+// Route for variants
+router.route('/:product_id/variants')
+    .post(productController.create_variant)
+    .get(productController.get_variants_by_product_id);
+
+router.route('/:product_id/variants/:variant_id')
+    .get(productController.get_variant_by_id)
+    .put(productController.update_variant)
+    .delete(productController.delete_variant);
+
 export default router;

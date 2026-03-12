@@ -1,16 +1,47 @@
 import { Model } from 'mongoose';
-import Product, { IProduct } from '../models/Product.model';
+import { Product as Product, ChildProduct, IProduct, IChildProduct } from '../models/Product.model';
 import mongoose from 'mongoose';
 
 export class ProductRepository {
     private model: Model<IProduct>;
+    private childModel: Model<IChildProduct>;
 
     constructor() {
         this.model = Product;
+        this.childModel = ChildProduct;
     }
 
     async create_product(productData: Partial<IProduct>): Promise<IProduct> {
         return await this.model.create(productData);
+    }
+
+    async create_variant(variantData: Partial<IChildProduct>): Promise<IChildProduct> {
+        return await this.childModel.create(variantData);
+    }
+
+    async get_variants_by_product_id(productId: string): Promise<IChildProduct[]> {
+        return await this.childModel.find({ parent_id: new mongoose.Types.ObjectId(productId) })
+                                    .sort({ createdAt: -1 });
+    }
+
+    async get_variant_by_id(variantId: string): Promise<IChildProduct | null> {
+        return await this.childModel.findById(variantId);
+    }
+
+    async update_variant(variantId: string, storeId: string, updateData: Partial<IChildProduct>): Promise<IChildProduct | null> {
+        return await this.childModel.findOneAndUpdate(
+            { _id: new mongoose.Types.ObjectId(variantId), store_id: new mongoose.Types.ObjectId(storeId) },
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+    }
+
+    async delete_variant(variantId: string, storeId: string): Promise<boolean> {
+        const result = await this.childModel.findOneAndDelete({
+            _id: new mongoose.Types.ObjectId(variantId),
+            store_id: new mongoose.Types.ObjectId(storeId)
+        });
+        return result !== null;
     }
 
     async get_product_by_id(productId: string): Promise<IProduct | null> {
@@ -28,7 +59,7 @@ export class ProductRepository {
 
         const [products, total] = await Promise.all([
             this.model.find(filter)
-                .populate('category_id', 'name') // Optional: populate category details instead of just ID
+                .populate('categories', 'name') // Optional: populate category details instead of just ID
                 .skip(skip)
                 .limit(limit)
                 .sort({ createdAt: -1 })

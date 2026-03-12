@@ -42,8 +42,8 @@ app.get('/', (req: Request, res: Response) => {
 
 // all new routes register here
 app.use('/api/v1/auth', auth_routes);
-app.use('/api/v1/store', store_routes);
-app.use('/api/v1/store/:store_id/product', product_routes);
+app.use('/api/v1/stores', store_routes);
+app.use('/api/v1/stores/:store_id/products', product_routes);
 
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

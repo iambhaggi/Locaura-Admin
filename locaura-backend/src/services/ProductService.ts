@@ -1,6 +1,6 @@
 import { ProductRepository } from '../repositories/ProductRepository';
 import { StoreRepository } from '../repositories/StoreRepository';
-import { IProduct } from '../models/Product.model';
+import { IProduct, IChildProduct } from '../models/Product.model';
 
 export class ProductService {
     private productRepository: ProductRepository;
@@ -18,15 +18,81 @@ export class ProductService {
             throw new Error('UNAUTHORIZED_STORE_ACCESS');
         }
 
-        // 2. Add the verified storeId
+        // 2. Add the verified storeId and retailerId
         productData.store_id = store._id;
+        productData.retailer_id = store.retailer_id;
         
-        // 3. Optional: Calculate discount percentages, validate attributes, etc
-        if (productData.price && productData.discount_price && productData.discount_price < productData.price) {
-            productData.discount_percentage = Math.round(((productData.price - productData.discount_price) / productData.price) * 100);
-        }
+        // 3. Optional: Map old fields if needed or handle logic for new schema
+        // Left blank because target fields (price -> base_price) have changed.
 
         return await this.productRepository.create_product(productData);
+    }
+
+    async create_variant(retailerId: string, storeId: string, parentId: string, variantData: Partial<IChildProduct>): Promise<IChildProduct> {
+        // 1. Verify ownership of the store
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
+        if (!store) {
+            throw new Error('UNAUTHORIZED_STORE_ACCESS');
+        }
+
+        // 2. Verify parent product exists and belongs to this store
+        const parentProduct = await this.productRepository.get_product_by_id(parentId);
+        if (!parentProduct || parentProduct.store_id.toString() !== storeId) {
+            throw new Error('PARENT_PRODUCT_NOT_FOUND_OR_UNAUTHORIZED');
+        }
+
+        // 3. Set associated IDs
+        variantData.parent_id = parentProduct._id;
+        variantData.store_id = store._id;
+        variantData.retailer_id = store.retailer_id;
+        
+        // Inherit categories from parent if they exist
+        if (parentProduct.categories && parentProduct.categories.length > 0) {
+            variantData.categories = parentProduct.categories;
+        }
+
+        return await this.productRepository.create_variant(variantData);
+    }
+
+    async get_variants_by_product_id(storeId: string, productId: string) {
+        // Verification to ensure the storeId maps correctly down the tree
+        const parentProduct = await this.productRepository.get_product_by_id(productId);
+        if (!parentProduct || parentProduct.store_id.toString() !== storeId) {
+            throw new Error('PARENT_PRODUCT_NOT_FOUND_OR_UNAUTHORIZED');
+        }
+        return await this.productRepository.get_variants_by_product_id(productId);
+    }
+
+    async get_variant_by_id(storeId: string, variantId: string): Promise<IChildProduct> {
+        const variant = await this.productRepository.get_variant_by_id(variantId);
+        if (!variant || variant.store_id.toString() !== storeId) {
+            throw new Error('VARIANT_NOT_FOUND_OR_UNAUTHORIZED');
+        }
+        return variant;
+    }
+
+    async update_variant(retailerId: string, storeId: string, variantId: string, updateData: Partial<IChildProduct>) {
+        // 1. Verify ownership of the store
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
+        if (!store) {
+            throw new Error('UNAUTHORIZED_STORE_ACCESS');
+        }
+
+        const updated = await this.productRepository.update_variant(variantId, storeId, updateData);
+        if (!updated) throw new Error('VARIANT_NOT_FOUND');
+        return updated;
+    }
+
+    async delete_variant(retailerId: string, storeId: string, variantId: string) {
+        // 1. Verify ownership of the store
+        const store = await this.storeRepository.find_by_id_and_retailer(storeId, retailerId);
+        if (!store) {
+            throw new Error('UNAUTHORIZED_STORE_ACCESS');
+        }
+
+        const deleted = await this.productRepository.delete_variant(variantId, storeId);
+        if (!deleted) throw new Error('VARIANT_NOT_FOUND');
+        return deleted;
     }
 
     async get_products_by_store_id(storeId: string, query: any = {}, page: number = 1, limit: number = 20) {
