@@ -2,6 +2,7 @@ import { ConsumerRepository } from '../repositories/ConsumerRepository';
 import { ProductRepository } from '../../Retailer/repositories/ProductRepository';
 import { IConsumerCart, IConsumer } from '../models/Consumer.model';
 import mongoose from 'mongoose';
+import { size } from 'zod';
 
 export class CartService {
     private consumer_repository = new ConsumerRepository();
@@ -43,6 +44,7 @@ export class CartService {
                     variant_label: variant.variant_label,
                     image_url: variant.images && variant.images.length > 0 ? variant.images[0] : undefined,
                     unit_price: variant.price,
+                    size: variant.size,
                     quantity: item.quantity,
                     total_price: item_total,
                     stock_available: variant.stock_quantity
