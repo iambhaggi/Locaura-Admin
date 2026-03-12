@@ -12,7 +12,11 @@ consumer_auth_router.post('/send-otp', validate_schema(send_otp_schema), auth_co
 consumer_auth_router.post('/verify-otp', validate_schema(verify_otp_schema), auth_controller.verify_otp);
 
 // Consumer Profile Details
+consumer_auth_router.get('/me', consumer_auth_middleware, auth_controller.get_consumer);
+consumer_auth_router.patch('/profile', consumer_auth_middleware, auth_controller.update_profile);
+consumer_auth_router.delete('/profile', consumer_auth_middleware, auth_controller.delete_account);
 consumer_auth_router.post('/complete-profile', consumer_auth_middleware, validate_schema(complete_profile_schema), auth_controller.complete_profile);
+consumer_auth_router.post('/logout', consumer_auth_middleware, auth_controller.logout);
 
 // Consumer Addresses
 consumer_auth_router.get('/addresses', consumer_auth_middleware, auth_controller.get_addresses);

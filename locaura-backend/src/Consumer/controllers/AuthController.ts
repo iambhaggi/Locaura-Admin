@@ -83,6 +83,92 @@ export class AuthController {
             res.status(500).json({ success: false, message: error.message });
         }
     };
+    // ─────────────────────────────────────────────────────────────────────────────
+    // PROFILE ENDPOINTS
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    get_consumer = async (req: Request, res: Response) => {
+        try {
+            const consumer_id = req.user?.id;
+            if (!consumer_id) {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+
+            // Re-using complete_profile without data behaves like a pure get OR simply fetch from service
+            const result = await this.auth_service.get_addresses(consumer_id); 
+            // Wait, we need a base find! So let's expose get_consumer via auth_service first or modify this controller directly.
+            // Oh right, auth_service exposes consumer indirectly. We should just fetch it using consumer_repository, but AuthController shouldn't access repo directly. Let's adjust auth_service below to add get_consumer.
+            const consumer = await this.auth_service.get_consumer(consumer_id);
+
+            if (!consumer) {
+                return res.status(404).json({ success: false, message: 'Consumer not found' });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: { consumer }
+            });
+
+        } catch (error: any) {
+            Logger.error('Get Consumer Error', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    };
+
+    update_profile = async (req: Request, res: Response) => {
+        try {
+            const consumer_id = req.user?.id;
+            if (!consumer_id) {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+
+            const result = await this.auth_service.update_profile(consumer_id, req.body);
+
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Consumer not found' });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Profile updated successfully',
+                data: { consumer: result }
+            });
+        } catch (error: any) {
+            Logger.error('Update Profile Error', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    };
+
+    delete_account = async (req: Request, res: Response) => {
+        try {
+            const consumer_id = req.user?.id;
+            if (!consumer_id) {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+
+            const result = await this.auth_service.delete_account(consumer_id);
+
+            if (!result) {
+                return res.status(404).json({ success: false, message: 'Consumer not found' });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'Account deleted successfully'
+            });
+        } catch (error: any) {
+            Logger.error('Delete Account Error', error);
+            res.status(500).json({ success: false, message: error.message });
+        }
+    };
+
+    logout = async (req: Request, res: Response) => {
+        // Simple success response for now as JWTs are stateless
+        res.status(200).json({
+            success: true,
+            message: 'Logged out successfully'
+        });
+    };
 
     // ─────────────────────────────────────────────────────────────────────────────
     // ADDRESS ENDPOINTS

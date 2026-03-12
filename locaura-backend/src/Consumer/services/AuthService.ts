@@ -91,6 +91,19 @@ export class AuthService {
         return { consumer: updated_consumer };
     }
 
+    // Step 4: Get Profile Data
+    async get_consumer(consumer_id: string): Promise<IConsumer | null> {
+        return await this.consumer_repository.find_by_id(consumer_id);
+    }
+
+    async update_profile(consumer_id: string, update_data: Partial<IConsumer>): Promise<IConsumer | null> {
+        return await this.consumer_repository.update(consumer_id, update_data);
+    }
+
+    async delete_account(consumer_id: string): Promise<IConsumer | null> {
+        return await this.consumer_repository.update(consumer_id, { status: 'deleted' });
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────
     // ADDRESS MANAGEMENT
     // ─────────────────────────────────────────────────────────────────────────────
