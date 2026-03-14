@@ -7,7 +7,8 @@ abstract class AppConstants {
   // Storage keys
   static const accessTokenKey = 'access_token';
   static const refreshTokenKey = 'refresh_token';
-  static const consumerIdKey = 'consumer_id';
+  static const retailerProfileKey = 'retailer_profile';
+  static const retailerIdKey = 'retailer_id';
 
   // OTP
   static const otpLength = 6;

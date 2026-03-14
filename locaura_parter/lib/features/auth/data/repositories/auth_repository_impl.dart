@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:locaura_parter/core/utils/app_constants.dart';
 import '../../../../core/network/api_result.dart';
@@ -11,8 +13,9 @@ import '../models/retailer.model.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
   final FlutterSecureStorage _storage;
+  final SharedPreferences _prefs;
 
-  AuthRepositoryImpl(this._remote, this._storage);
+  AuthRepositoryImpl(this._remote, this._storage, this._prefs);
 
   @override
   ApiResult<void> sendOtp(String phone) async {
@@ -30,23 +33,51 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  @override
-ApiResult<RetailerEntity> verifyOtp(String phone, String otp) async {
-  try {
-    final response = await _remote.verifyOtp(phone, otp);
-    await _storage.write(
-      key: AppConstants.accessTokenKey,
-      value: response.token,
-    );
-    return Right(response.toEntity());
-  } catch (e) {
-    return Left(handleException(e));
+  ApiResult<RetailerEntity> verifyOtp(String phone, String otp) async {
+    try {
+      final response = await _remote.verifyOtp(phone, otp);
+      final entity = response.toEntity();
+
+      // Save token
+      await _storage.write(
+        key: AppConstants.accessTokenKey,
+        value: response.token,
+      );
+
+      // Save profile
+      await _prefs.setString(
+        AppConstants.retailerProfileKey,
+        jsonEncode(entity.toJson()),
+      );
+
+      return Right(entity);
+    } catch (e) {
+      return Left(handleException(e));
+    }
   }
-}
 
   @override
   ApiResult<void> logout() async {
     await _storage.deleteAll();
+    await clearPersistedProfile();
     return const Right(null);
+  }
+
+  @override
+  Future<RetailerEntity?> getPersistedProfile() async {
+    final profileJson = _prefs.getString(AppConstants.retailerProfileKey);
+    if (profileJson != null) {
+      try {
+        return RetailerEntity.fromJson(jsonDecode(profileJson));
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<void> clearPersistedProfile() async {
+    await _prefs.remove(AppConstants.retailerProfileKey);
   }
 }

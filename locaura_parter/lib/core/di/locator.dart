@@ -27,6 +27,7 @@ Future<void> configureDependencies() async {
     AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
       getIt<FlutterSecureStorage>(),
+      getIt<SharedPreferences>(),
     ),
   );
 }

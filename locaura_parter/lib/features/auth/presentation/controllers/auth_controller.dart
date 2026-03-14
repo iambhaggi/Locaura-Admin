@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../../core/di/locator.dart';
 import '../../domain/entities/retailer.entity.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/send_otp.usecase.dart';
 import '../../domain/usecases/verify_otp.usecase.dart';
 
@@ -19,8 +20,17 @@ class AuthState with _$AuthState {
 class AuthController extends StateNotifier<AuthState> {
   final SendOtpUseCase _sendOtp;
   final VerifyOtpUseCase _verifyOtp;
+  final AuthRepository _repository;
 
-  AuthController(this._sendOtp, this._verifyOtp) : super(const AuthState.initial());
+  AuthController(this._sendOtp, this._verifyOtp, this._repository)
+      : super(const AuthState.initial());
+
+  Future<void> loadPersistedProfile() async {
+    final profile = await _repository.getPersistedProfile();
+    if (profile != null) {
+      state = AuthState.authenticated(profile);
+    }
+  }
 
   Future<void> sendOtp(String phone) async {
     state = const AuthState.loading();
@@ -40,6 +50,11 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
+  Future<void> logout() async {
+    await _repository.logout();
+    state = const AuthState.initial();
+  }
+
   void reset() => state = const AuthState.initial();
 }
 
@@ -48,5 +63,6 @@ final authControllerProvider =
   return AuthController(
     SendOtpUseCase(getIt()),
     VerifyOtpUseCase(getIt()),
+    getIt<AuthRepository>(),
   );
 });

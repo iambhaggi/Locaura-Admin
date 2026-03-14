@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:locaura_parter/features/auth/presentation/controllers/auth_controller.dart';
 import 'core/di/locator.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -8,7 +9,17 @@ import 'core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await configureDependencies();
-  runApp(const ProviderScope(child: AppRoot()));
+  
+  final container = ProviderContainer();
+  // Load persisted profile before running the app
+  await container.read(authControllerProvider.notifier).loadPersistedProfile();
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const AppRoot(),
+    ),
+  );
 }
 
 class AppRoot extends ConsumerWidget {
