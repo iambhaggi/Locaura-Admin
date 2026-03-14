@@ -9,6 +9,7 @@ import '../../features/home/presentation/screens/tabs/home_tab.dart';
 import '../../features/home/presentation/screens/tabs/orders_tab.dart';
 import '../../features/home/presentation/screens/tabs/analytics_tab.dart';
 import '../../features/home/presentation/screens/tabs/profile_tab.dart';
+import '../../features/store/presentation/screens/store_form_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -36,6 +37,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final phone = state.extra as String;
           return OtpScreen(phone: phone);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.registerStore,
+        name: 'registerStore',
+        builder: (_, __) => const StoreFormScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.editStore,
+        name: 'editStore',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return StoreFormScreen(storeId: id);
         },
       ),
       StatefulShellRoute.indexedStack(
@@ -92,4 +106,6 @@ abstract class AppRoutes {
   static const orders = '/orders';
   static const analytics = '/analytics';
   static const profile = '/profile';
+  static const registerStore = '/store/register';
+  static const editStore = '/store/edit/:id';
 }

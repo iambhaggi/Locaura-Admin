@@ -6,6 +6,10 @@ import '../network/api_client.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/store/data/datasources/store_remote_datasource.dart';
+import '../../features/store/data/repositories/store_repository_impl.dart';
+import '../../features/store/domain/repositories/store_repository.dart';
+import '../../features/store/domain/usecases/store_usecases.dart';
 
 final getIt = GetIt.instance;
 
@@ -30,4 +34,19 @@ Future<void> configureDependencies() async {
       getIt<SharedPreferences>(),
     ),
   );
+
+  // Store
+  getIt.registerLazySingleton<StoreRemoteDataSource>(
+    () => StoreRemoteDataSource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<StoreRepository>(
+    () => StoreRepositoryImpl(getIt<StoreRemoteDataSource>()),
+  );
+
+  // Store UseCases
+  getIt.registerLazySingleton<RegisterStore>(() => RegisterStore(getIt<StoreRepository>()));
+  getIt.registerLazySingleton<GetMyStores>(() => GetMyStores(getIt<StoreRepository>()));
+  getIt.registerLazySingleton<GetStoreDetails>(() => GetStoreDetails(getIt<StoreRepository>()));
+  getIt.registerLazySingleton<UpdateStore>(() => UpdateStore(getIt<StoreRepository>()));
+  getIt.registerLazySingleton<DeleteStore>(() => DeleteStore(getIt<StoreRepository>()));
 }

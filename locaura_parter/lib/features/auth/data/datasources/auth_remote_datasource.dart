@@ -4,8 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:locaura_parter/features/auth/data/models/retailer.model.dart';
 
 class AuthRemoteDataSource extends ApiService {
-  final Dio _dio;
-  AuthRemoteDataSource(this._dio) : super(httpClient: _dio);
+  AuthRemoteDataSource(Dio dio) : super(httpClient: dio);
 
   Future<void> sendOtp(String phone) async {
     final result = await postRequest<void>(

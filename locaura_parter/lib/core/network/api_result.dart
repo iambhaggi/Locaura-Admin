@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
+import '../utils/logger.dart';
 
 // ─── Failures ──────────────────────────────────────────────────────────────
 
@@ -52,6 +53,7 @@ typedef ApiResult<T> = Future<Either<Failure, T>>;
 // ─── Central exception handler ─────────────────────────────────────────────
 
 Failure handleException(Object e) {
+  Log.error('API Error: $e', error: e);
   if (e is DioException) return _fromDioException(e);
   return UnknownFailure(message: e.toString());
 }
