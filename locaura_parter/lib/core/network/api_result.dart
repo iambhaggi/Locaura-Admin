@@ -54,6 +54,7 @@ typedef ApiResult<T> = Future<Either<Failure, T>>;
 
 Failure handleException(Object e) {
   Log.error('API Error: $e', error: e);
+  if (e is Failure) return e;
   if (e is DioException) return _fromDioException(e);
   return UnknownFailure(message: e.toString());
 }

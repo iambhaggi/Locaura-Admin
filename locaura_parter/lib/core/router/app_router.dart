@@ -10,6 +10,8 @@ import '../../features/home/presentation/screens/tabs/orders_tab.dart';
 import '../../features/home/presentation/screens/tabs/analytics_tab.dart';
 import '../../features/home/presentation/screens/tabs/profile_tab.dart';
 import '../../features/store/presentation/screens/store_form_screen.dart';
+import '../../features/product/presentation/screens/product_list_screen.dart';
+import '../../features/product/presentation/screens/product_form_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -50,6 +52,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return StoreFormScreen(storeId: id);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.productList,
+        name: 'productList',
+        builder: (context, state) {
+          final storeId = state.pathParameters['storeId']!;
+          return ProductListScreen(storeId: storeId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.productForm,
+        name: 'productForm',
+        builder: (context, state) {
+          final storeId = state.pathParameters['storeId']!;
+          final productId = state.extra as String?;
+          return ProductFormScreen(storeId: storeId, productId: productId);
         },
       ),
       StatefulShellRoute.indexedStack(
@@ -108,4 +127,6 @@ abstract class AppRoutes {
   static const profile = '/profile';
   static const registerStore = '/store/register';
   static const editStore = '/store/edit/:id';
+  static const productList = '/store/:storeId/products';
+  static const productForm = '/store/:storeId/product-form';
 }

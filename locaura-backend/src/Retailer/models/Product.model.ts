@@ -197,8 +197,8 @@ const ChildProductSchema = new Schema<IChildProduct>(
 
 // Parent — all listing/browse queries
 ParentProductSchema.index({ store_id: 1, status: 1 });
-ParentProductSchema.index({ store_id: 1, category_id: 1, status: 1 });
-ParentProductSchema.index({ store_id: 1, slug: 1 }, { unique: true });
+ParentProductSchema.index({ store_id: 1, status: 1 });
+// ParentProductSchema.index({ store_id: 1, slug: 1 });
 ParentProductSchema.index({ store_id: 1, brand: 1, status: 1 });
 ParentProductSchema.index({ store_id: 1, gender: 1, status: 1 });
 ParentProductSchema.index({ store_id: 1, is_featured: 1, status: 1 });
@@ -232,6 +232,20 @@ ChildProductSchema.pre('save', function (this: IChildProduct) {
     if (this.length) parts.push(this.length);
     this.custom_variation_attributes.forEach((a) => parts.push(a.value));
     if (parts.length > 0) this.variant_label = parts.join(' / ');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PARENT HOOKS
+// ─────────────────────────────────────────────────────────────────────────────
+
+ParentProductSchema.pre('validate', function (this: IProduct, next) {
+    if (this.name && !this.slug) {
+        // Simple slugify: lowercase, remove non-alphanumeric, replace spaces with hyphens
+        this.slug = this.name
+            .toLowerCase()
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-');
+    }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

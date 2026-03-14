@@ -10,6 +10,10 @@ import '../../features/store/data/datasources/store_remote_datasource.dart';
 import '../../features/store/data/repositories/store_repository_impl.dart';
 import '../../features/store/domain/repositories/store_repository.dart';
 import '../../features/store/domain/usecases/store_usecases.dart';
+import '../../features/product/data/datasources/product_remote_datasource.dart';
+import '../../features/product/data/repositories/product_repository_impl.dart';
+import '../../features/product/domain/repositories/product_repository.dart';
+import '../../features/product/domain/usecases/product_usecases.dart';
 
 final getIt = GetIt.instance;
 
@@ -49,4 +53,24 @@ Future<void> configureDependencies() async {
   getIt.registerLazySingleton<GetStoreDetails>(() => GetStoreDetails(getIt<StoreRepository>()));
   getIt.registerLazySingleton<UpdateStore>(() => UpdateStore(getIt<StoreRepository>()));
   getIt.registerLazySingleton<DeleteStore>(() => DeleteStore(getIt<StoreRepository>()));
+
+  // Product
+  getIt.registerLazySingleton<ProductRemoteDataSource>(
+    () => ProductRemoteDataSource(getIt<Dio>()),
+  );
+  getIt.registerLazySingleton<ProductRepository>(
+    () => ProductRepositoryImpl(getIt<ProductRemoteDataSource>()),
+  );
+
+  // Product UseCases
+  getIt.registerLazySingleton<CreateProduct>(() => CreateProduct(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<GetStoreProducts>(() => GetStoreProducts(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<GetProductDetails>(() => GetProductDetails(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<UpdateProduct>(() => UpdateProduct(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<DeleteProduct>(() => DeleteProduct(getIt<ProductRepository>()));
+  
+  getIt.registerLazySingleton<CreateVariant>(() => CreateVariant(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<GetProductVariants>(() => GetProductVariants(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<UpdateVariant>(() => UpdateVariant(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<DeleteVariant>(() => DeleteVariant(getIt<ProductRepository>()));
 }

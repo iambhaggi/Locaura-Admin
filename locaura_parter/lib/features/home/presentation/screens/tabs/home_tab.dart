@@ -118,7 +118,9 @@ class HomeTab extends ConsumerWidget {
               },
             ),
             onTap: () {
-              // Navigate to store details
+              context.push(
+                AppRoutes.productList.replaceAll(':storeId', store.id),
+              );
             },
           ),
         );

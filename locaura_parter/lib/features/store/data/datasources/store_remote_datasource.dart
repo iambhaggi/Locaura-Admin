@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/api_service.dart';
 import '../models/store.model.dart';
 
@@ -7,7 +8,7 @@ class StoreRemoteDataSource extends ApiService {
 
   Future<StoreModel> registerStore(Map<String, dynamic> storeData) async {
     final result = await postRequest<StoreModel>(
-      path: '/api/v1/stores/register',
+      path: ApiEndpoints.registerStore,
       body: storeData,
       fromJson: (data) => StoreModel.fromJson(data['data']['store'] as Map<String, dynamic>),
     );
@@ -16,7 +17,7 @@ class StoreRemoteDataSource extends ApiService {
 
   Future<List<StoreModel>> getMyStores() async {
     final result = await getRequest<List<StoreModel>>(
-      path: '/api/v1/stores/me',
+      path: ApiEndpoints.myStores,
       fromJson: (data) {
         final list = data['data']['stores'] as List;
         return list.map((e) => StoreModel.fromJson(e as Map<String, dynamic>)).toList();
@@ -27,7 +28,7 @@ class StoreRemoteDataSource extends ApiService {
 
   Future<StoreModel> getStore(String id) async {
     final result = await getRequest<StoreModel>(
-      path: '/api/v1/stores/$id',
+      path: ApiEndpoints.storeDetails(id),
       fromJson: (data) => StoreModel.fromJson(data['data']['store'] as Map<String, dynamic>),
     );
     return result.getOrElse((failure) => throw failure);
@@ -35,7 +36,7 @@ class StoreRemoteDataSource extends ApiService {
 
   Future<StoreModel> updateStore(String id, Map<String, dynamic> updateData) async {
     final result = await putRequest<StoreModel>(
-      path: '/api/v1/stores/$id',
+      path: ApiEndpoints.storeDetails(id),
       body: updateData,
       fromJson: (data) => StoreModel.fromJson(data['data']['store'] as Map<String, dynamic>),
     );
@@ -44,7 +45,7 @@ class StoreRemoteDataSource extends ApiService {
 
   Future<void> deleteStore(String id) async {
     final result = await deleteRequest(
-      path: '/api/v1/stores/$id',
+      path: ApiEndpoints.storeDetails(id),
     );
     result.getOrElse((failure) => throw failure);
   }

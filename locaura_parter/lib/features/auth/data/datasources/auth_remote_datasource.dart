@@ -1,3 +1,4 @@
+import 'package:locaura_parter/core/network/api_endpoints.dart';
 import 'package:locaura_parter/core/network/api_service.dart';
 
 import 'package:dio/dio.dart';
@@ -8,23 +9,23 @@ class AuthRemoteDataSource extends ApiService {
 
   Future<void> sendOtp(String phone) async {
     final result = await postRequest<void>(
-      path: '/api/v1/auth/send-otp',
+      path: ApiEndpoints.sendOtp,
       body: {'phone': phone},
       fromJson: (_) {},
     );
 
-    result.fold((failure) => throw Exception(failure.message), (_) {});
+    result.fold((failure) => throw failure, (_) {});
   }
 
-  Future<VerifyOtpResponseModel>verifyOtp(String phone, String otp) async {
+  Future<VerifyOtpResponseModel> verifyOtp(String phone, String otp) async {
     final result = await postRequest<Map<String, dynamic>>(
-      path: '/api/v1/auth/verify-otp',
+      path: ApiEndpoints.verifyOtp,
       body: {'phone': phone, 'otp': otp},
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
     return result.fold(
-      (failure) => throw Exception(failure.message),
+      (failure) => throw failure,
       (data) => VerifyOtpResponseModel.fromJson(data),
     );
   }
