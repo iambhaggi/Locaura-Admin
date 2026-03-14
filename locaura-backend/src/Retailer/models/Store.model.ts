@@ -28,7 +28,7 @@ export interface IStore extends Document {
     location?: ILocation;
 
     // bank details and tax info
-    pan_card?: string;
+    // pan_card?: string;
     gstin?: string;
     // make sure store address is same as fssai license address
     fssai_license?: string; // Food Safety and Standards Authority of India
@@ -103,6 +103,15 @@ const StoreSchema: Schema = new Schema({
     rating: { type: Number, default: 0 },
     total_reviews: { type: Number, default: 0 }
 }, { timestamps: true });
+// Generate slug before saving
+StoreSchema.pre('save', function (this: any, next: any) {
+    if (this.isModified('store_name')) {
+        this.slug = this.store_name
+            .toLowerCase()
+            .replace(/[^\w ]+/g, '')
+            .replace(/ +/g, '-');
+    }
+});
 
 // CRITICAL: Index for proximity search
 StoreSchema.index({ location: '2dsphere' });

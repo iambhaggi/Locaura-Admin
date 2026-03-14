@@ -31,15 +31,15 @@ export const register_store_schema = z.object({
         }).optional(),
 
         // Tax / Legal
-        pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional(),
-        gstin: z.string().min(15, "GSTIN must be 15 characters").max(15, "GSTIN must be 15 characters").optional(),
+        pan_card: z.string().length(10, "PAN must be 10 characters").or(z.literal("")).optional(),
+        gstin: z.string().length(15, "GSTIN must be 15 characters").or(z.literal("")).optional(),
         fssai_license: z.string().optional(),
 
         // Bank Details
         bank_details: z.object({
-            account_number: z.string().min(1, "Account Number is required"),
-            ifsc_code: z.string().min(1, "IFSC Code is required"),
-            account_holder_name: z.string().min(1, "Account Holder Name is required"),
+            account_number: z.string().optional(),
+            ifsc_code: z.string().optional(),
+            account_holder_name: z.string().optional(),
             bank_name: z.string().optional()
         }).optional()
     })
@@ -69,14 +69,14 @@ export const update_store_schema = z.object({
             coordinates: z.array(z.number()).length(2)
         }).optional(),
 
-        pan_card: z.string().min(10, "PAN must be 10 characters").max(10, "PAN must be 10 characters").optional(),
-        gstin: z.string().min(15, "GSTIN must be 15 characters").max(15, "GSTIN must be 15 characters").optional(),
+        pan_card: z.string().length(10, "PAN must be 10 characters").or(z.literal("")).optional(),
+        gstin: z.string().length(15, "GSTIN must be 15 characters").or(z.literal("")).optional(),
         fssai_license: z.string().optional(),
 
         bank_details: z.object({
-            account_number: z.string().min(1, "Account Number is required"),
-            ifsc_code: z.string().min(1, "IFSC Code is required"),
-            account_holder_name: z.string().min(1, "Account Holder Name is required"),
+            account_number: z.string().optional(),
+            ifsc_code: z.string().optional(),
+            account_holder_name: z.string().optional(),
             bank_name: z.string().optional()
         }).optional(),
 
