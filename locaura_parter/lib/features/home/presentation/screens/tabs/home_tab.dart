@@ -21,8 +21,11 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   bool _isOnline = true;
   StoreEntity? _selectedStore;
 
-  final currencyFormatter =
-      NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+  final currencyFormatter = NumberFormat.currency(
+    locale: 'en_IN',
+    symbol: '₹',
+    decimalDigits: 0,
+  );
 
   @override
   void initState() {
@@ -48,13 +51,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
               slivers: [
                 _buildHeader(context, stores),
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
-                _buildStats(context),
+                // _buildStats(context),
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
-                _buildSalesOverview(context),
+                // _buildSalesOverview(context),
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
                 _buildRecentOrdersHeader(context),
                 _buildRecentOrdersList(context),
-                SliverToBoxAdapter(child: SizedBox(height: 100.h)), // For padding/FAB
+                SliverToBoxAdapter(
+                  child: SizedBox(height: 100.h),
+                ), // For padding/FAB
               ],
             );
           },
@@ -80,9 +85,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                   onTap: () => setState(() => _isOnline = !_isOnline),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: _isOnline ? const Color(0xFF00BFA5) : Colors.grey.shade400,
+                      color: _isOnline
+                          ? const Color(0xFF00BFA5)
+                          : Colors.grey.shade400,
                       borderRadius: BorderRadius.circular(20.r),
                     ),
                     child: Row(
@@ -91,14 +101,17 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         Text(
                           _isOnline ? 'online' : 'offline',
                           style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600),
+                            color: Colors.white,
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         SizedBox(width: 4.w),
                         AnimatedAlign(
                           duration: const Duration(milliseconds: 200),
-                          alignment: _isOnline ? Alignment.centerRight : Alignment.centerLeft,
+                          alignment: _isOnline
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
                           child: Container(
                             width: 14.w,
                             height: 14.w,
@@ -114,7 +127,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 ),
                 const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.notifications_none, color: Colors.black),
+                  icon: const Icon(
+                    Icons.notifications_none,
+                    color: Colors.black,
+                  ),
                   onPressed: () {},
                 ),
                 IconButton(
@@ -139,7 +155,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       color: const Color(0xFFE3F2FD),
                       borderRadius: BorderRadius.circular(8.r),
                     ),
-                    child: const Icon(Icons.storefront, color: Color(0xFF1976D2)),
+                    child: const Icon(
+                      Icons.storefront,
+                      color: Color(0xFF1976D2),
+                    ),
                   ),
                   SizedBox(width: 12.w),
                   Expanded(
@@ -151,7 +170,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                             Text(
                               _selectedStore?.storeName ?? 'Select Hub',
                               style: TextStyle(
-                                  fontSize: 18.sp, fontWeight: FontWeight.bold),
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Icon(Icons.keyboard_arrow_down, size: 20.sp),
                           ],
@@ -159,7 +180,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         Text(
                           'Merchant ID: #${_selectedStore?.id.substring(0, 5) ?? '00000'}',
                           style: TextStyle(
-                              fontSize: 12.sp, color: Colors.grey.shade500),
+                            fontSize: 12.sp,
+                            color: Colors.grey.shade500,
+                          ),
                         ),
                       ],
                     ),
@@ -230,9 +253,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 Text(
                   label,
                   style: TextStyle(
-                      fontSize: 10.sp,
-                      color: textColor.withOpacity(0.8),
-                      fontWeight: FontWeight.bold),
+                    fontSize: 10.sp,
+                    color: textColor.withOpacity(0.8),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -240,7 +264,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             Text(
               value,
               style: TextStyle(
-                  fontSize: 22.sp, fontWeight: FontWeight.bold, color: Colors.black87),
+                fontSize: 22.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
             SizedBox(height: 4.h),
             Row(
@@ -284,9 +311,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 Text(
                   'Total Sales Overview',
                   style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w500),
+                    fontSize: 14.sp,
+                    color: Colors.grey.shade500,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
@@ -296,14 +324,19 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.arrow_upward, size: 12.sp, color: Colors.green),
+                      Icon(
+                        Icons.arrow_upward,
+                        size: 12.sp,
+                        color: Colors.green,
+                      ),
                       SizedBox(width: 4.w),
                       Text(
                         '18.5%',
                         style: TextStyle(
-                            color: Colors.green,
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.green,
+                          fontSize: 11.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -333,7 +366,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                               child: Text(
                                 titles[(value / 2).floor()],
                                 style: TextStyle(
-                                    color: Colors.grey, fontSize: 10.sp),
+                                  color: Colors.grey,
+                                  fontSize: 10.sp,
+                                ),
                               ),
                             );
                           }
@@ -399,12 +434,18 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           children: [
             Row(
               children: [
-                Icon(Icons.assignment_outlined,
-                    size: 20.sp, color: const Color(0xFF1976D2)),
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 20.sp,
+                  color: const Color(0xFF1976D2),
+                ),
                 SizedBox(width: 8.w),
                 Text(
                   'Recent Orders',
-                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -447,76 +488,82 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     ];
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final order = mockOrders[index];
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-            padding: EdgeInsets.all(12.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 60.w,
-                  height: 60.w,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: const Icon(Icons.image_outlined, color: Colors.grey),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final order = mockOrders[index];
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 60.w,
+                height: 60.w,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                SizedBox(width: 12.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        order['title'] as String,
-                        style: TextStyle(
-                            fontSize: 14.sp, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Order ${order['id']} • ${order['time']}',
-                        style: TextStyle(
-                            fontSize: 11.sp, color: Colors.grey.shade500),
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                child: const Icon(Icons.image_outlined, color: Colors.grey),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      order['price'] as String,
+                      order['title'] as String,
                       style: TextStyle(
-                          fontSize: 14.sp, fontWeight: FontWeight.bold),
-                    ),
-                    Container(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: order['color'] as Color,
-                        borderRadius: BorderRadius.circular(4.r),
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: Text(
-                        order['status'] as String,
-                        style: TextStyle(
-                            fontSize: 10.sp,
-                            color: order['iconColor'] as Color,
-                            fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'Order ${order['id']} • ${order['time']}',
+                      style: TextStyle(
+                        fontSize: 11.sp,
+                        color: Colors.grey.shade500,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          );
-        },
-        childCount: mockOrders.length,
-      ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    order['price'] as String,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 6.w,
+                      vertical: 2.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: order['color'] as Color,
+                      borderRadius: BorderRadius.circular(4.r),
+                    ),
+                    child: Text(
+                      order['status'] as String,
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: order['iconColor'] as Color,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }, childCount: mockOrders.length),
     );
   }
 
@@ -542,7 +589,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           foregroundColor: Colors.white,
           elevation: 4,
           icon: const Icon(Icons.add_circle_outline),
-          label: const Text('New Store          '), // Spacing to match widths approx
+          label: const Text(
+            'New Store          ',
+          ), // Spacing to match widths approx
         ),
       ],
     );
