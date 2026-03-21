@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../utils/app_constants.dart';
 import '../../features/auth/presentation/screens/phone_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
@@ -13,9 +15,31 @@ import '../../features/store/presentation/screens/store_form_screen.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_form_screen.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AuthState>(
+      authControllerProvider,
+      (previous, next) {
+        if (previous != next) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final notifier = ref.watch(routerNotifierProvider);
+
   return GoRouter(
     initialLocation: AppRoutes.home,
+    refreshListenable: notifier,
     redirect: (context, state) async {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: AppConstants.accessTokenKey);
@@ -117,6 +141,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
 
 abstract class AppRoutes {
   static const phone = '/auth/phone';

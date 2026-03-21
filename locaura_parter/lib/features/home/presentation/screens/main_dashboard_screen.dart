@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 class MainDashboardScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
@@ -13,37 +15,59 @@ class MainDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: (index) {
-          navigationShell.goBranch(
-            index,
-            initialLocation: index == navigationShell.currentIndex,
-          );
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+      bottomNavigationBar: Container(
+        margin: EdgeInsets.fromLTRB(24.w, 0, 24.w, 24.h),
+        height: 64.h,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32.r),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildNavItem(0, Icons.home, Icons.home_outlined, 'Home'),
+            _buildNavItem(1, Icons.shopping_bag, Icons.shopping_bag_outlined, 'Orders'),
+            _buildNavItem(2, Icons.bar_chart, Icons.bar_chart_outlined, 'Inventory'),
+            _buildNavItem(3, Icons.person, Icons.person_outline, 'Profile'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData selectedIcon, IconData icon, String label) {
+    final isSelected = navigationShell.currentIndex == index;
+    return GestureDetector(
+      onTap: () => navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isSelected ? selectedIcon : icon,
+            color: isSelected ? Colors.black : Colors.grey.shade400,
+            size: 24.sp,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: 'Orders',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.analytics_outlined),
-            selectedIcon: Icon(Icons.analytics),
-            label: 'Analytics',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
+          SizedBox(height: 4.h),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.black : Colors.grey.shade400,
+              fontSize: 10.sp,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            ),
           ),
         ],
       ),
     );
   }
 }
+
