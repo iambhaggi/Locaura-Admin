@@ -18,16 +18,13 @@ import '../../features/product/domain/usecases/product_usecases.dart';
 final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
-  // External
   final prefs = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(prefs);
   getIt.registerSingleton<FlutterSecureStorage>(const FlutterSecureStorage());
 
-  // Network
   getIt.registerSingleton<ApiClient>(ApiClient());
   getIt.registerSingleton<Dio>(getIt<ApiClient>().dio);
 
-  // Auth
   getIt.registerSingleton<AuthRemoteDataSource>(
     AuthRemoteDataSource(getIt<Dio>()),
   );
@@ -39,7 +36,6 @@ Future<void> configureDependencies() async {
     ),
   );
 
-  // Store
   getIt.registerLazySingleton<StoreRemoteDataSource>(
     () => StoreRemoteDataSource(getIt<Dio>()),
   );
@@ -47,14 +43,12 @@ Future<void> configureDependencies() async {
     () => StoreRepositoryImpl(getIt<StoreRemoteDataSource>()),
   );
 
-  // Store UseCases
   getIt.registerLazySingleton<RegisterStore>(() => RegisterStore(getIt<StoreRepository>()));
   getIt.registerLazySingleton<GetMyStores>(() => GetMyStores(getIt<StoreRepository>()));
   getIt.registerLazySingleton<GetStoreDetails>(() => GetStoreDetails(getIt<StoreRepository>()));
   getIt.registerLazySingleton<UpdateStore>(() => UpdateStore(getIt<StoreRepository>()));
   getIt.registerLazySingleton<DeleteStore>(() => DeleteStore(getIt<StoreRepository>()));
 
-  // Product
   getIt.registerLazySingleton<ProductRemoteDataSource>(
     () => ProductRemoteDataSource(getIt<Dio>()),
   );
@@ -62,15 +56,15 @@ Future<void> configureDependencies() async {
     () => ProductRepositoryImpl(getIt<ProductRemoteDataSource>()),
   );
 
-  // Product UseCases
   getIt.registerLazySingleton<CreateProduct>(() => CreateProduct(getIt<ProductRepository>()));
   getIt.registerLazySingleton<GetStoreProducts>(() => GetStoreProducts(getIt<ProductRepository>()));
   getIt.registerLazySingleton<GetProductDetails>(() => GetProductDetails(getIt<ProductRepository>()));
   getIt.registerLazySingleton<UpdateProduct>(() => UpdateProduct(getIt<ProductRepository>()));
   getIt.registerLazySingleton<DeleteProduct>(() => DeleteProduct(getIt<ProductRepository>()));
-  
+
   getIt.registerLazySingleton<CreateVariant>(() => CreateVariant(getIt<ProductRepository>()));
   getIt.registerLazySingleton<GetProductVariants>(() => GetProductVariants(getIt<ProductRepository>()));
+  getIt.registerLazySingleton<GetVariantDetails>(() => GetVariantDetails(getIt<ProductRepository>()));
   getIt.registerLazySingleton<UpdateVariant>(() => UpdateVariant(getIt<ProductRepository>()));
   getIt.registerLazySingleton<DeleteVariant>(() => DeleteVariant(getIt<ProductRepository>()));
 }

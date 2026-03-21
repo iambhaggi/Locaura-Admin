@@ -194,30 +194,23 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: AppSizes.s20),
-
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'Product Name'),
             validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
-
           const SizedBox(height: AppSizes.s16),
-
           TextFormField(
             controller: _brandController,
             decoration: const InputDecoration(labelText: 'Brand'),
           ),
-
           const SizedBox(height: AppSizes.s16),
-
           TextFormField(
             controller: _descController,
             maxLines: 3,
             decoration: const InputDecoration(labelText: 'Description'),
           ),
-
           const SizedBox(height: AppSizes.s16),
-
           TextFormField(
             controller: _priceController,
             keyboardType: TextInputType.number,
@@ -227,9 +220,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             ),
             validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           ),
-
           const SizedBox(height: AppSizes.s16),
-
           DropdownButtonFormField<String>(
             value: _selectedGender,
             items: _genders
@@ -241,9 +232,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             onChanged: (v) => setState(() => _selectedGender = v),
             decoration: const InputDecoration(labelText: 'Gender'),
           ),
-
           const SizedBox(height: AppSizes.s32),
-
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
@@ -272,19 +261,56 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Variations', style: context.textTheme.titleLarge),
-              ElevatedButton.icon(
-                onPressed: _showAddVariantDialog,
-                icon: const Icon(Icons.add),
-                label: const Text('Add Variant'),
+              SizedBox(
+                width: 160,
+                child: ElevatedButton.icon(
+                  onPressed: _showAddVariantDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Variant'),
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.s20),
+          if (variants.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(child: Text('No child variants yet. Add one to enable pricing by size/color.')),
+            ),
           ...variants.map(
             (v) => Card(
               child: ListTile(
-                title: Text(v.variantLabel ?? '${v.color ?? ''} / ${v.size ?? ''}'),
-                subtitle: Text('Rs ${v.price} | Stock ${v.stockQuantity}'),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                onTap: () async {
+                  final productId = _createdProduct?.id;
+                  if (productId == null) {
+                    return;
+                  }
+
+                  final variant = await ref.read(productControllerProvider.notifier).fetchVariantDetails(
+                        widget.storeId,
+                        productId,
+                        v.id,
+                      );
+                  if (!mounted || variant == null) {
+                    return;
+                  }
+                  _showVariantDetailsSheet(variant);
+                },
+                title: Text(v.variantLabel.isNotEmpty ? v.variantLabel : (v.sku.isNotEmpty ? v.sku : 'Variant')),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text('Rs ${v.price} | Stock ${v.stockQuantity}'),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _buildVariantMetaChips(v, compact: true),
+                    ),
+                  ],
+                ),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _showDeleteVariantConfirmation(v),
@@ -311,6 +337,106 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               );
         });
         return const Center(child: CircularProgressIndicator());
+      },
+    );
+  }
+
+  List<Widget> _buildVariantMetaChips(ProductVariantEntity variant, {bool compact = false}) {
+    final chips = <Widget>[];
+
+    void addChip(String label, String? value) {
+      if (value == null || value.trim().isEmpty) {
+        return;
+      }
+      chips.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            '$label: $value',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
+
+    addChip('Color', variant.color);
+    addChip('Size', variant.size);
+    addChip('Length', variant.length);
+
+    if (!compact) {
+      addChip('SKU', variant.sku);
+      addChip('Barcode', variant.barcode);
+    }
+
+    for (final attr in variant.customVariationAttributes) {
+      addChip(attr.name, attr.value);
+    }
+
+    return chips;
+  }
+
+  void _showVariantDetailsSheet(ProductVariantEntity variant) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.pagePaddingH),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    variant.variantLabel.isNotEmpty ? variant.variantLabel : 'Variant details',
+                    style: context.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: AppSizes.s12),
+                  if (variant.images.isNotEmpty)
+                    SizedBox(
+                      height: 180,
+                      width: double.infinity,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                        child: AppImage(
+                          imageUrl: variant.images.first,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  if (variant.images.isNotEmpty) const SizedBox(height: AppSizes.s12),
+                  Text('Price: Rs ${variant.price}', style: context.textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text('Stock Quantity: ${variant.stockQuantity}'),
+                  const SizedBox(height: 4),
+                  Text('Reserved Quantity: ${variant.reservedQuantity}'),
+                  const SizedBox(height: 4),
+                  Text('SKU: ${variant.sku}'),
+                  const SizedBox(height: 4),
+                  Text('Status: ${variant.isActive ? 'Active' : 'Inactive'}'),
+                  const SizedBox(height: AppSizes.s12),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: _buildVariantMetaChips(variant),
+                  ),
+                  const SizedBox(height: AppSizes.s16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('CLOSE'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
       },
     );
   }
@@ -354,7 +480,119 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         );
   }
 
-  void _showAddVariantDialog() {}
+  void _showAddVariantDialog() {
+    if (_createdProduct == null) {
+      context.showSnackbar('Save product first before adding variants.', isError: true);
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+    final colorController = TextEditingController();
+    final sizeController = TextEditingController();
+    final lengthController = TextEditingController();
+    final skuController = TextEditingController();
+    final priceController = TextEditingController();
+    final stockController = TextEditingController(text: '0');
+    final imageUrlController = TextEditingController();
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Add Variant'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: colorController,
+                    decoration: const InputDecoration(labelText: 'Color'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: sizeController,
+                    decoration: const InputDecoration(labelText: 'Size'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: lengthController,
+                    decoration: const InputDecoration(labelText: 'Length'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: skuController,
+                    decoration: const InputDecoration(labelText: 'SKU (optional)'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: priceController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Price (optional, defaults to parent)'),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: stockController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Stock Quantity'),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Required';
+                      }
+                      final qty = int.tryParse(v.trim());
+                      if (qty == null || qty < 0) {
+                        return 'Enter valid stock';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: imageUrlController,
+                    decoration: const InputDecoration(labelText: 'Image URL (optional)'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (!formKey.currentState!.validate()) {
+                  return;
+                }
+
+                final parsedPrice = double.tryParse(priceController.text.trim());
+                final variantData = <String, dynamic>{
+                  if (colorController.text.trim().isNotEmpty) 'color': colorController.text.trim(),
+                  if (sizeController.text.trim().isNotEmpty) 'size': sizeController.text.trim(),
+                  if (lengthController.text.trim().isNotEmpty) 'length': lengthController.text.trim(),
+                  if (skuController.text.trim().isNotEmpty) 'sku': skuController.text.trim(),
+                  if (parsedPrice != null) 'price': parsedPrice,
+                  'stock_quantity': int.parse(stockController.text.trim()),
+                  if (imageUrlController.text.trim().isNotEmpty) 'images': [imageUrlController.text.trim()],
+                };
+
+                ref.read(productControllerProvider.notifier).addVariant(
+                      widget.storeId,
+                      _createdProduct!.id,
+                      variantData,
+                    );
+
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('ADD'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   void _showDeleteVariantConfirmation(ProductVariantEntity variant) {
     showDialog(
@@ -397,16 +635,17 @@ class _StepIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isActive = currentIndex == index;
+    final isActive = currentIndex == index;
 
     return Column(
       children: [
         CircleAvatar(
           radius: 12,
-          backgroundColor:
-              isActive ? context.colorScheme.primary : Colors.grey.shade300,
-          child: Text('${index + 1}',
-              style: const TextStyle(fontSize: 12, color: Colors.white)),
+          backgroundColor: isActive ? context.colorScheme.primary : Colors.grey.shade300,
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(fontSize: 12, color: Colors.white),
+          ),
         ),
         const SizedBox(height: 4),
         Text(label, style: const TextStyle(fontSize: 10)),

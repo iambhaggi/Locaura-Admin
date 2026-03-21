@@ -30,6 +30,7 @@ class ProductController extends StateNotifier<ProductState> {
   final DeleteProduct _deleteProduct;
   final CreateVariant _createVariant;
   final GetProductVariants _getProductVariants;
+  final GetVariantDetails _getVariantDetails;
   final UpdateVariant _updateVariant;
   final DeleteVariant _deleteVariant;
 
@@ -41,6 +42,7 @@ class ProductController extends StateNotifier<ProductState> {
     required DeleteProduct deleteProduct,
     required CreateVariant createVariant,
     required GetProductVariants getProductVariants,
+    required GetVariantDetails getVariantDetails,
     required UpdateVariant updateVariant,
     required DeleteVariant deleteVariant,
   })  : _createProduct = createProduct,
@@ -50,6 +52,7 @@ class ProductController extends StateNotifier<ProductState> {
         _deleteProduct = deleteProduct,
         _createVariant = createVariant,
         _getProductVariants = getProductVariants,
+        _getVariantDetails = getVariantDetails,
         _updateVariant = updateVariant,
         _deleteVariant = deleteVariant,
         super(const ProductState.initial());
@@ -138,6 +141,26 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<ProductVariantEntity?> fetchVariantDetails(
+    String storeId,
+    String productId,
+    String variantId,
+  ) async {
+    final result = await _getVariantDetails(
+      storeId: storeId,
+      productId: productId,
+      variantId: variantId,
+    );
+
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (variant) => variant,
+    );
+  }
+
   Future<void> addVariant(String storeId, String productId, Map<String, dynamic> variantData) async {
     state = const ProductState.loading();
     final result = await _createVariant(storeId: storeId, productId: productId, variantData: variantData);
@@ -194,6 +217,7 @@ final productControllerProvider =
     deleteProduct: getIt<DeleteProduct>(),
     createVariant: getIt<CreateVariant>(),
     getProductVariants: getIt<GetProductVariants>(),
+    getVariantDetails: getIt<GetVariantDetails>(),
     updateVariant: getIt<UpdateVariant>(),
     deleteVariant: getIt<DeleteVariant>(),
   );

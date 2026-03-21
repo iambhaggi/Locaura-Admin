@@ -39,7 +39,6 @@ abstract class ProductRepository {
     required String productId,
   });
 
-  // Variants
   Future<Either<Failure, ProductVariantEntity>> createVariant({
     required String storeId,
     required String productId,
@@ -49,6 +48,12 @@ abstract class ProductRepository {
   Future<Either<Failure, List<ProductVariantEntity>>> getProductVariants({
     required String storeId,
     required String productId,
+  });
+
+  Future<Either<Failure, ProductVariantEntity>> getVariantById({
+    required String storeId,
+    required String productId,
+    required String variantId,
   });
 
   Future<Either<Failure, ProductVariantEntity>> updateVariant({

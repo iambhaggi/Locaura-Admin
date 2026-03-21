@@ -100,6 +100,18 @@ class ProductRemoteDataSource extends ApiService {
     return result.getOrElse((failure) => throw failure);
   }
 
+  Future<ProductVariantModel> getVariantDetails({
+    required String storeId,
+    required String productId,
+    required String variantId,
+  }) async {
+    final result = await getRequest<ProductVariantModel>(
+      path: ApiEndpoints.variantDetails(storeId, productId, variantId),
+      fromJson: (data) => ProductVariantModel.fromJson(data['data'] as Map<String, dynamic>),
+    );
+    return result.getOrElse((failure) => throw failure);
+  }
+
   Future<ProductVariantModel> updateVariant({
     required String storeId,
     required String productId,

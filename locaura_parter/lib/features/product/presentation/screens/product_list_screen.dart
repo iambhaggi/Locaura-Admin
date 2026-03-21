@@ -61,7 +61,10 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             ],
           ),
         ),
-        orElse: () => const Center(child: CircularProgressIndicator()),
+        orElse: () {
+          // This case should ideally never happen, but we handle it just in case
+          return const Center(child: Text('Unexpected state')); 
+        },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(

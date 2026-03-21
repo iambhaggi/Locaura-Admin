@@ -85,6 +85,23 @@ class GetProductVariants {
   }
 }
 
+class GetVariantDetails {
+  final ProductRepository repository;
+  GetVariantDetails(this.repository);
+
+  Future<Either<Failure, ProductVariantEntity>> call({
+    required String storeId,
+    required String productId,
+    required String variantId,
+  }) {
+    return repository.getVariantById(
+      storeId: storeId,
+      productId: productId,
+      variantId: variantId,
+    );
+  }
+}
+
 class GetProductDetails {
   final ProductRepository repository;
   GetProductDetails(this.repository);

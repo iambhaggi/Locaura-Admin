@@ -148,6 +148,24 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<Either<Failure, ProductVariantEntity>> getVariantById({
+    required String storeId,
+    required String productId,
+    required String variantId,
+  }) async {
+    try {
+      final variant = await remoteDataSource.getVariantDetails(
+        storeId: storeId,
+        productId: productId,
+        variantId: variantId,
+      );
+      return Right(variant.toEntity());
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
   Future<Either<Failure, ProductVariantEntity>> updateVariant({
     required String storeId,
     required String productId,
