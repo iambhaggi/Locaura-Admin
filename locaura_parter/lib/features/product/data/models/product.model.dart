@@ -1,5 +1,6 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:json_annotation/json_annotation.dart';
 import '../../domain/entities/product.entity.dart';
 
 part 'product.model.freezed.dart';
