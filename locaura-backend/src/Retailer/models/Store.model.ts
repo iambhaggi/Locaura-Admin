@@ -46,8 +46,8 @@ export interface IStore extends Document {
 
     // status
     is_delivery_available: boolean;
-    is_active: boolean;
-    status: RetailerStatus;
+    is_active: boolean; // we need this for toggle online status
+    status: RetailerStatus;// PENDING, ACTIVE, INACTIVE, REJECTED
     is_open_now?: boolean;// to handle real-time business hours
 
     // performance
