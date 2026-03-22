@@ -7,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:locaura_parter/core/extensions/context_extensions.dart';
 import 'package:locaura_parter/core/router/app_router.dart';
 import 'package:locaura_parter/core/utils/app_sizes.dart';
+import 'package:locaura_parter/core/widgets/common/app_image.dart';
+import 'package:locaura_parter/features/product/presentation/controllers/product_controller.dart';
 import 'package:locaura_parter/features/store/presentation/controllers/store_controller.dart';
 import 'package:locaura_parter/features/store/domain/entities/store.entity.dart';
 
@@ -18,7 +20,6 @@ class HomeTab extends ConsumerStatefulWidget {
 }
 
 class _HomeTabState extends ConsumerState<HomeTab> {
-  bool _isOnline = true;
   StoreEntity? _selectedStore;
 
   final currencyFormatter = NumberFormat.currency(
@@ -35,9 +36,43 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     });
   }
 
+  Future<void> _toggleOnlineStatus(String id) async {
+    if (_selectedStore == null) return;
+    // We can rely on the controller logic which toggles the status and refreshes the list
+    await ref
+        .read(storeControllerProvider.notifier)
+        .toggleOnlineStatus(_selectedStore!.id);
+  }
+
   @override
   Widget build(BuildContext context) {
     final storeState = ref.watch(storeControllerProvider);
+
+    ref.listen(storeControllerProvider, (previous, next) {
+      next.maybeWhen(
+        success: (stores) {
+          if (stores.isNotEmpty) {
+            if (_selectedStore == null) {
+              // Initial load
+              setState(() => _selectedStore = stores.first);
+              ref
+                  .read(productControllerProvider.notifier)
+                  .fetchStoreProducts(stores.first.id);
+            } else {
+              // Synchronize _selectedStore with updated data from the list
+              final updatedStore = stores.firstWhere(
+                (s) => s.id == _selectedStore!.id,
+                orElse: () => stores.first,
+              );
+              if (_selectedStore != updatedStore) {
+                setState(() => _selectedStore = updatedStore);
+              }
+            }
+          }
+        },
+        orElse: () {},
+      );
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -45,14 +80,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
         child: storeState.maybeWhen(
           success: (stores) {
             if (stores.isEmpty) return _buildEmptyState(context);
+            // Ensure we have a selection if logic above missed it for some reason
             _selectedStore ??= stores.first;
 
             return CustomScrollView(
               slivers: [
                 _buildHeader(context, stores),
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
-                // _buildStats(context),
-                SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+                ..._buildProducts(context),
+                // SliverToBoxAdapter(child: SizedBox(height: 16.h)),
                 // _buildSalesOverview(context),
                 SliverToBoxAdapter(child: SizedBox(height: 16.h)),
                 _buildRecentOrdersHeader(context),
@@ -72,6 +108,101 @@ class _HomeTabState extends ConsumerState<HomeTab> {
     );
   }
 
+  List<Widget> _buildProducts(BuildContext context) {
+    return [
+      SliverPadding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+        sliver: SliverToBoxAdapter(
+          child: Text(
+            'Products',
+            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+      ref
+          .watch(productControllerProvider)
+          .maybeWhen(
+            success: (products) => SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              sliver: products.isEmpty
+                  ? SliverToBoxAdapter(child: Text('No products'))
+                  : SliverGrid(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12.w,
+                        mainAxisSpacing: 12.h,
+                        childAspectRatio: 0.8, // Adjust to fit image + texts
+                      ),
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final product = products[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(12.r),
+                                  ),
+                                  child: AppImage(
+                                    imageUrl: null,
+                                    height: 150.h,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(8.w),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      product.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 14.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4.h),
+                                    Text(
+                                      currencyFormatter.format(
+                                        product.basePrice,
+                                      ),
+                                      style: TextStyle(
+                                        fontSize: 13.sp,
+                                        color: const Color(0xFFFA641E),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }, childCount: products.length),
+                    ),
+            ),
+            orElse: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+          ),
+      SliverToBoxAdapter(child: SizedBox(height: 16.h)),
+    ];
+  }
+
   Widget _buildHeader(BuildContext context, List<StoreEntity> stores) {
     return SliverToBoxAdapter(
       child: Padding(
@@ -82,7 +213,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             Row(
               children: [
                 GestureDetector(
-                  onTap: () => setState(() => _isOnline = !_isOnline),
+                  onTap: () => _toggleOnlineStatus(_selectedStore!.id),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     padding: EdgeInsets.symmetric(
@@ -90,7 +221,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       vertical: 4.h,
                     ),
                     decoration: BoxDecoration(
-                      color: _isOnline
+                      color: _selectedStore!.isActive
                           ? const Color(0xFF00BFA5)
                           : Colors.grey.shade400,
                       borderRadius: BorderRadius.circular(20.r),
@@ -99,7 +230,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _isOnline ? 'online' : 'offline',
+                          _selectedStore!.isActive ? 'online' : 'offline',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 12.sp,
@@ -109,7 +240,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                         SizedBox(width: 4.w),
                         AnimatedAlign(
                           duration: const Duration(milliseconds: 200),
-                          alignment: _isOnline
+                          alignment: _selectedStore!.isActive
                               ? Alignment.centerRight
                               : Alignment.centerLeft,
                           child: Container(
@@ -142,7 +273,12 @@ class _HomeTabState extends ConsumerState<HomeTab> {
             SizedBox(height: 12.h),
             PopupMenuButton<StoreEntity>(
               offset: Offset(0, 48.h),
-              onSelected: (store) => setState(() => _selectedStore = store),
+              onSelected: (store) {
+                setState(() => _selectedStore = store);
+                ref
+                    .read(productControllerProvider.notifier)
+                    .fetchStoreProducts(store.id);
+              },
               itemBuilder: (context) => stores
                   .map((s) => PopupMenuItem(value: s, child: Text(s.storeName)))
                   .toList(),

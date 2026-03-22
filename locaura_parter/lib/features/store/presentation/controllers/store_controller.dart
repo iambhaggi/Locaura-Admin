@@ -80,6 +80,16 @@ class StoreController extends StateNotifier<StoreState> {
     );
   }
 
+  Future<void> toggleOnlineStatus(String id) async {
+    state.maybeWhen(
+      success: (stores) async {
+        final store = stores.firstWhere((s) => s.id == id);
+        await updateExistingStore(id, {'is_active': !store.isActive});
+      },
+      orElse: () {},
+    );
+  }
+
   Future<void> deleteExistingStore(String id) async {
     state = const StoreState.loading();
     final result = await _deleteStore(id);
