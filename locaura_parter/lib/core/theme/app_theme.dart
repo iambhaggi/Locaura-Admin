@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
@@ -6,6 +7,7 @@ abstract class AppTheme {
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
+        fontFamily: GoogleFonts.inter().fontFamily,
         colorScheme: const ColorScheme.light(
           primary: AppColors.primary,
           onPrimary: AppColors.white,
@@ -73,6 +75,7 @@ abstract class AppTheme {
   static ThemeData get dark => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
+        fontFamily: GoogleFonts.inter().fontFamily,
         colorScheme: const ColorScheme.dark(
           primary: AppColors.primaryLight,
           onPrimary: AppColors.white,
