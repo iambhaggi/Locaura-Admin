@@ -25,6 +25,8 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
 
   // Image Picking
   File? _logoFile;
+  File? _bannerFile;
+  List<File> _galleryFiles = [];
   final _picker = ImagePicker();
 
   // Location State
@@ -38,23 +40,53 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _retailerNameController = TextEditingController();
+
+  // Address
+  final _shopNoController = TextEditingController();
+  final _buildingController = TextEditingController();
   final _streetController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _zipController = TextEditingController();
+  final _landmarkController = TextEditingController();
+
+  // Social
+  final _instaController = TextEditingController();
+  final _whatsappController = TextEditingController();
+
+  // Legal
   final _gstController = TextEditingController();
   final _fssaiController = TextEditingController();
+
+  // Bank
   final _ifscController = TextEditingController();
   final _accNoController = TextEditingController();
   final _accHolderController = TextEditingController();
-  // "Individual"|"Partnership"|"Private Limited"|"Public Limited"
+
+  // Operations
+  final _radiusController = TextEditingController(text: '10');
+  final _minOrderController = TextEditingController(text: '0');
+  final _deliveryFeeController = TextEditingController(text: '0');
+  bool _isDeliveryAvailable = false;
+
+  // Categories & Hours
+  List<String> _selectedCategories = [];
+  List<BusinessHourEntity> _businessHours = [
+    BusinessHourEntity(day: 'Monday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Tuesday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Wednesday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Thursday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Friday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Saturday', open: '09:00', close: '21:00'),
+    BusinessHourEntity(day: 'Sunday', open: '09:00', close: '21:00', isClosed: true),
+  ];
+
   List<String> _businessTypes = [
     "Individual",
     "Partnership",
     "Private Limited",
     "Public Limited",
   ];
-
   String _businessType = "Individual";
 
   @override
@@ -76,14 +108,24 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
         _phoneController.text = '9876543210';
         _emailController.text = 'rahul.sharma@example.com';
         _retailerNameController.text = 'Rahul Sharma';
+        _shopNoController.text = '102-B';
+        _buildingController.text = 'Skyline Heights';
         _streetController.text = '100ft Ring Road';
         _cityController.text = 'Bangalore';
         _stateController.text = 'Karnataka';
         _zipController.text = '560034';
+        _landmarkController.text = 'Near HDFC Bank';
+        _instaController.text = 'urban_threads';
+        _whatsappController.text = '9876543210';
         _gstController.text = '29XYZPB9876Q1Z2';
         _ifscController.text = 'KKBK0008068';
         _accNoController.text = '54123698745';
         _accHolderController.text = 'Rahul Sharma';
+        _radiusController.text = '15';
+        _minOrderController.text = '500';
+        _deliveryFeeController.text = '40';
+        _isDeliveryAvailable = true;
+        _selectedCategories = ['Groceries', 'Fashion'];
         _businessType = _businessTypes.first;
         setState(() {});
       }
@@ -96,16 +138,28 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     _phoneController.text = store.retailerPhone;
     _emailController.text = store.retailerEmail;
     _retailerNameController.text = store.retailerName;
+    _shopNoController.text = store.address?.shopNumber ?? '';
+    _buildingController.text = store.address?.buildingName ?? '';
     _streetController.text = store.address?.street ?? '';
     _cityController.text = store.address?.city ?? '';
     _stateController.text = store.address?.state ?? '';
     _zipController.text = store.address?.zipCode ?? '';
+    _landmarkController.text = store.address?.landmark ?? '';
+    _instaController.text = store.socialLinks?.instagram ?? '';
+    _whatsappController.text = store.socialLinks?.whatsapp ?? '';
     _gstController.text = store.gstin ?? '';
-    _fssaiController.text =
-        store.fssaiLicense ?? ''; // Assuming fssaiLicense exists in StoreEntity
+    _fssaiController.text = store.fssaiLicense ?? '';
     _ifscController.text = store.bankDetails?.ifscCode ?? '';
     _accNoController.text = store.bankDetails?.accountNumber ?? '';
     _accHolderController.text = store.bankDetails?.accountHolderName ?? '';
+    _radiusController.text = store.deliveryRadiusKm.toString();
+    _minOrderController.text = store.minOrderAmount.toString();
+    _deliveryFeeController.text = store.deliveryFee.toString();
+    _isDeliveryAvailable = store.isDeliveryAvailable;
+    _selectedCategories = List.from(store.categories);
+    if (store.businessHours.isNotEmpty) {
+      _businessHours = List.from(store.businessHours);
+    }
 
     // Load coordinates
     if (store.location?.coordinates != null &&
@@ -128,15 +182,23 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _retailerNameController.dispose();
+    _shopNoController.dispose();
+    _buildingController.dispose();
     _streetController.dispose();
     _cityController.dispose();
     _stateController.dispose();
     _zipController.dispose();
+    _landmarkController.dispose();
+    _instaController.dispose();
+    _whatsappController.dispose();
     _gstController.dispose();
     _fssaiController.dispose();
     _ifscController.dispose();
     _accNoController.dispose();
     _accHolderController.dispose();
+    _radiusController.dispose();
+    _minOrderController.dispose();
+    _deliveryFeeController.dispose();
     super.dispose();
   }
 
@@ -144,6 +206,22 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     final picked = await _picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() => _logoFile = File(picked.path));
+    }
+  }
+
+  Future<void> _pickBanner() async {
+    final picked = await _picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() => _bannerFile = File(picked.path));
+    }
+  }
+
+  Future<void> _pickGallery() async {
+    final picked = await _picker.pickMultiImage();
+    if (picked.isNotEmpty) {
+      setState(() {
+        _galleryFiles.addAll(picked.map((e) => File(e.path)));
+      });
     }
   }
 
@@ -188,7 +266,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
   }
 
   void _onNext() {
-    if (_currentPage < 4) {
+    if (_currentPage < 6) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -207,11 +285,18 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
         'retailer_name': _retailerNameController.text,
         'retailer_phone': _phoneController.text,
         'retailer_email': _emailController.text,
+        'social_links': {
+          'instagram': _instaController.text,
+          'whatsapp': _whatsappController.text,
+        },
         'address': {
+          'shop_number': _shopNoController.text,
+          'building_name': _buildingController.text,
           'street': _streetController.text,
           'city': _cityController.text,
           'state': _stateController.text,
           'zip_code': _zipController.text,
+          'landmark': _landmarkController.text,
         },
         'location': {
           'type': 'Point',
@@ -224,8 +309,21 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
           'ifsc_code': _ifscController.text,
           'account_holder_name': _accHolderController.text,
         },
-        // In real app, we'd upload the _logoFile and put URL here
+        'categories': _selectedCategories,
+        'business_hours': _businessHours.map((e) => {
+          'day': e.day,
+          'open': e.open,
+          'close': e.close,
+          'is_closed': e.isClosed,
+        }).toList(),
+        'delivery_radius_km': double.tryParse(_radiusController.text) ?? 10.0,
+        'min_order_amount': double.tryParse(_minOrderController.text) ?? 0.0,
+        'delivery_fee': double.tryParse(_deliveryFeeController.text) ?? 0.0,
+        'is_delivery_available': _isDeliveryAvailable,
+        // In real app, we'd upload files and put URLs here
         'logo_url': '',
+        'banner_url': '',
+        'store_images': [],
       };
 
       if (widget.storeId == null) {
@@ -290,7 +388,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
       body: Column(
         children: [
           LinearProgressIndicator(
-            value: (_currentPage + 1) / 5,
+            value: (_currentPage + 1) / 7,
             backgroundColor: Colors.grey.shade100,
             valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFA641E)),
             minHeight: 2,
@@ -308,6 +406,8 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
                   _buildSlide3(),
                   _buildSlide4(),
                   _buildSlide5(),
+                  _buildSlide6(),
+                  _buildSlide7(),
                 ],
               ),
             ),
@@ -320,7 +420,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
 
   Widget _buildSlide1() {
     return _buildSlideWrapper(
-      title: 'Store Details',
+      title: 'Store Identity',
       subtitle:
           'Tell us about your business to get started\nselling on our platform.',
       children: [
@@ -331,27 +431,45 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
           validator: (v) => v!.isEmpty ? 'Store name is required' : null,
         ),
         SizedBox(height: 20.h),
-        _buildLabel('Business Category'),
+        _buildLabel('Business Type'),
         _buildDropdown(),
         SizedBox(height: 20.h),
         _buildLabel('Store Description (Optional)'),
         _buildTextField(
           controller: _descController,
           hint: 'Tell your customers what makes your\nstore special...',
-          maxLines: 4,
+          maxLines: 3,
         ),
         SizedBox(height: 24.h),
-        _buildLabel('Store Logo'),
-        _buildImageUploadArea(),
+        _buildLabel('Store Branding'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildImageUploadArea(
+                label: 'Store Logo',
+                file: _logoFile,
+                onTap: _pickLogo,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: _buildImageUploadArea(
+                label: 'Store Banner',
+                file: _bannerFile,
+                onTap: _pickBanner,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
 
   Widget _buildSlide2() {
     return _buildSlideWrapper(
-      title: 'Contact Details',
+      title: 'Contact & Social',
       subtitle:
-          'Provide the primary contact information for\nthis store branch.',
+          'Provide the primary contact information and\nsocial profiles for this hub.',
       children: [
         _buildLabel('Retailer Name'),
         _buildTextField(
@@ -375,6 +493,28 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
           keyboardType: TextInputType.emailAddress,
           validator: (v) => v!.isEmpty ? 'Email is required' : null,
         ),
+        SizedBox(height: 24.h),
+        _buildLabel('Social Presence (Optional)'),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                controller: _instaController,
+                hint: 'Instagram @handle',
+                prefixIcon: Icons.camera_alt_outlined,
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: _buildTextField(
+                controller: _whatsappController,
+                hint: 'WhatsApp Number',
+                prefixIcon: Icons.chat_bubble_outline,
+                keyboardType: TextInputType.phone,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -384,10 +524,48 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
       title: 'Store Location',
       subtitle: 'This will be your pickup address for\norders and delivery.',
       children: [
+        Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Shop/Plot No'),
+                  _buildTextField(
+                    controller: _shopNoController,
+                    hint: 'e.g. 102/B',
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Building Name'),
+                  _buildTextField(
+                    controller: _buildingController,
+                    hint: 'e.g. Skyline Heights',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20.h),
         _buildLabel('Street Address'),
         _buildTextField(
           controller: _streetController,
-          hint: 'Plot No, Street Name',
+          hint: 'Area, Cross Road Name',
+        ),
+        SizedBox(height: 20.h),
+        _buildLabel('Landmark (Optional)'),
+        _buildTextField(
+          controller: _landmarkController,
+          hint: 'e.g. Near HDFC Bank',
         ),
         SizedBox(height: 20.h),
         Row(
@@ -409,22 +587,16 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLabel('State'),
+                  _buildLabel('Pincode'),
                   _buildTextField(
-                    controller: _stateController,
-                    hint: 'e.g. Maharashtra',
+                    controller: _zipController,
+                    hint: '6-digit code',
+                    keyboardType: TextInputType.number,
                   ),
                 ],
               ),
             ),
           ],
-        ),
-        SizedBox(height: 20.h),
-        _buildLabel('Pincode'),
-        _buildTextField(
-          controller: _zipController,
-          hint: '6-digit code',
-          keyboardType: TextInputType.number,
         ),
         SizedBox(height: 24.h),
         _buildLabel('Fetch Geolocation'),
@@ -486,6 +658,269 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
 
   Widget _buildSlide4() {
     return _buildSlideWrapper(
+      title: 'Delivery & Gallery',
+      subtitle: 'Set your delivery rules and showcase\nyour store with photos.',
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Delivery Radius (km)'),
+                  _buildTextField(
+                    controller: _radiusController,
+                    hint: 'e.g. 10',
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Min Order (₹)'),
+                  _buildTextField(
+                    controller: _minOrderController,
+                    hint: 'e.g. 100',
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 20.h),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Delivery Fee (₹)'),
+                  _buildTextField(
+                    controller: _deliveryFeeController,
+                    hint: 'e.g. 30',
+                    keyboardType: TextInputType.number,
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Allow Delivery?'),
+                  SwitchListTile(
+                    value: _isDeliveryAvailable,
+                    onChanged: (v) => setState(() => _isDeliveryAvailable = v),
+                    activeColor: const Color(0xFFFA641E),
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      _isDeliveryAvailable ? 'Active' : 'Disabled',
+                      style: TextStyle(fontSize: 14.sp),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 24.h),
+        _buildLabel('Business Categories'),
+        Wrap(
+          spacing: 8.w,
+          runSpacing: 4.h,
+          children: ['Groceries', 'Pharmacy', 'Fashion', 'Electronics', 'Home Decor', 'Food']
+              .map((cat) {
+            final isSelected = _selectedCategories.contains(cat);
+            return FilterChip(
+              label: Text(cat, style: TextStyle(fontSize: 12.sp)),
+              selected: isSelected,
+              onSelected: (v) {
+                setState(() {
+                  if (v) {
+                    _selectedCategories.add(cat);
+                  } else {
+                    _selectedCategories.remove(cat);
+                  }
+                });
+              },
+              selectedColor: const Color(0xFFFA641E).withOpacity(0.2),
+              checkmarkColor: const Color(0xFFFA641E),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+            );
+          }).toList(),
+        ),
+        SizedBox(height: 24.h),
+        _buildLabel('Store Gallery'),
+        _buildGalleryGrid(),
+      ],
+    );
+  }
+
+  Widget _buildSlide5() {
+    return _buildSlideWrapper(
+      title: 'Business Hours',
+      subtitle: 'Set when your store is open and closed\nfor customers.',
+      children: [
+        ..._businessHours.asMap().entries.map((entry) {
+          int idx = entry.key;
+          var hour = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 90.w,
+                  child: Text(
+                    hour.day,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: hour.isClosed ? Colors.grey : Colors.black87,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: hour.isClosed
+                      ? Text('Closed',
+                          style: TextStyle(
+                              fontSize: 13.sp, color: Colors.grey.shade400))
+                      : Row(
+                          children: [
+                            _buildTimeBox(hour.open ?? '09:00', () => _selectTime(idx, true)),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8.w),
+                              child: Text('-', style: TextStyle(color: Colors.grey)),
+                            ),
+                            _buildTimeBox(hour.close ?? '21:00', () => _selectTime(idx, false)),
+                          ],
+                        ),
+                ),
+                Transform.scale(
+                  scale: 0.8,
+                  child: Switch(
+                    value: !hour.isClosed,
+                    onChanged: (v) {
+                      setState(() {
+                        _businessHours[idx] = hour.copyWith(isClosed: !v);
+                      });
+                    },
+                    activeColor: const Color(0xFFFA641E),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildTimeBox(String time, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(8.r),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Text(
+          time,
+          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w500),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectTime(int idx, bool isOpen) async {
+    final current = isOpen ? _businessHours[idx].open : _businessHours[idx].close;
+    final parts = current?.split(':') ?? ['09', '00'];
+    final initialTime = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: const ColorScheme.light(primary: Color(0xFFFA641E)),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final newTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      setState(() {
+        if (isOpen) {
+          _businessHours[idx] = _businessHours[idx].copyWith(open: newTime);
+        } else {
+          _businessHours[idx] = _businessHours[idx].copyWith(close: newTime);
+        }
+      });
+    }
+  }
+
+  Widget _buildGalleryGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12.w,
+        mainAxisSpacing: 12.w,
+      ),
+      itemCount: _galleryFiles.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _galleryFiles.length) {
+          return GestureDetector(
+            onTap: _pickGallery,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(color: Colors.grey.shade300, style: BorderStyle.solid),
+              ),
+              child: Icon(Icons.add_photo_alternate_outlined, color: Colors.grey, size: 28.sp),
+            ),
+          );
+        }
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: Image.file(_galleryFiles[index], fit: BoxFit.cover),
+              ),
+            ),
+            Positioned(
+              top: 4.h,
+              right: 4.w,
+              child: GestureDetector(
+                onTap: () => setState(() => _galleryFiles.removeAt(index)),
+                child: Container(
+                  padding: EdgeInsets.all(4.w),
+                  decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                  child: Icon(Icons.close, color: Colors.white, size: 12.sp),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSlide6() {
+    return _buildSlideWrapper(
       title: 'Legal & Compliance',
       subtitle: 'Help us verify your business for\nsmooth operations.',
       children: [
@@ -509,7 +944,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     );
   }
 
-  Widget _buildSlide5() {
+  Widget _buildSlide7() {
     return _buildSlideWrapper(
       title: 'Settlement Account',
       subtitle: 'Where should we send your payouts for\neach order?',
@@ -578,6 +1013,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     String? hint,
     int maxLines = 1,
     TextInputType? keyboardType,
+    IconData? prefixIcon,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -585,8 +1021,10 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      style: TextStyle(fontSize: 14.sp),
       decoration: InputDecoration(
         hintText: hint,
+        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20.sp, color: Colors.grey) : null,
         hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13.sp),
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         enabledBorder: OutlineInputBorder(
@@ -630,9 +1068,13 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     );
   }
 
-  Widget _buildImageUploadArea() {
+  Widget _buildImageUploadArea({
+    required String label,
+    required File? file,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: _pickLogo,
+      onTap: onTap,
       child: Container(
         height: 100.h,
         decoration: BoxDecoration(
@@ -641,52 +1083,38 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
           border: Border.all(
             color: const Color(0xFFFFCCAC),
             style: BorderStyle.solid,
-          ), // No dotted in standard BoxDecor, will use solid for now
+          ),
         ),
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Row(
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 60.w,
-                height: 60.w,
+                width: 44.w,
+                height: 44.w,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
-                child: _logoFile != null
+                child: file != null
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12.r),
-                        child: Image.file(_logoFile!, fit: BoxFit.cover),
+                        borderRadius: BorderRadius.circular(10.r),
+                        child: Image.file(file, fit: BoxFit.cover),
                       )
                     : Icon(
                         Icons.add_a_photo_outlined,
                         color: const Color(0xFFFA641E),
-                        size: 24.sp,
+                        size: 20.sp,
                       ),
               ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'JPG, PNG or GIF. Max size of 5MB.',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    Text(
-                      'Click to upload',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: const Color(0xFFFA641E),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              SizedBox(height: 8.h),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: const Color(0xFFFA641E),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
@@ -719,7 +1147,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
               child: isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : Text(
-                      _currentPage == 4 ? 'Create Store' : 'Continue',
+                      _currentPage == 6 ? (widget.storeId == null ? 'Create Store' : 'Update Store') : 'Continue',
                       style: TextStyle(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.bold,
