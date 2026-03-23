@@ -8,9 +8,9 @@ import '../utils/app_constants.dart';
 import '../../features/auth/presentation/screens/phone_screen.dart';
 import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/home/presentation/screens/main_dashboard_screen.dart';
-import '../../features/home/presentation/screens/tabs/home_tab.dart';
+import '../../features/home/presentation/screens/tabs/inventory_tab.dart';
 import '../../features/home/presentation/screens/tabs/orders_tab.dart';
-import '../../features/home/presentation/screens/tabs/analytics_tab.dart';
+import '../../features/home/presentation/screens/tabs/home_tab.dart';
 import '../../features/home/presentation/screens/tabs/profile_tab.dart';
 import '../../features/store/presentation/screens/store_form_screen.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
@@ -123,9 +123,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.analytics,
-                name: 'analytics',
-                builder: (_, __) => const AnalyticsTab(),
+                path: AppRoutes.inventory,
+                name: 'inventory',
+                builder: (_, __) => const InventoryTab(),
               ),
             ],
           ),
@@ -169,7 +169,7 @@ abstract class AppRoutes {
   static const otp = '/auth/otp';
   static const home = '/home';
   static const orders = '/orders';
-  static const analytics = '/analytics';
+  static const inventory = '/inventory';
   static const profile = '/profile';
   static const registerStore = '/store/register';
   static const editStore = '/store/edit/:id';
