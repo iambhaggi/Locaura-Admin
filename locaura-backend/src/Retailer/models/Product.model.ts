@@ -124,69 +124,84 @@ const ProductAttributeSchema = new Schema<IProductAttribute>(
 
 const ParentProductSchema = new Schema<IProduct>(
     {
-        store_id: { type: Schema.Types.ObjectId, ref: 'Store', required: true },
-        retailer_id: { type: Schema.Types.ObjectId, ref: 'Retailer', required: true },
-        categories: { type: [String], default: [] },
+        // === CORE RELATIONS ===
+        store_id: { type: Schema.Types.ObjectId, ref: 'Store', required: true }, // Links product to a specific store instance
+        retailer_id: { type: Schema.Types.ObjectId, ref: 'Retailer', required: true }, // Links product to the business owner
+        categories: { type: [String], default: [] }, // Broad organizational buckets (e.g., ['Clothing', 'Men'])
 
-        name: { type: String, required: true, trim: true },
-        slug: { type: String, required: true, lowercase: true, trim: true },
-        brand: { type: String, trim: true },
-        description: { type: String },
+        // === GLOBAL PRODUCT DETAILS ===
+        name: { type: String, required: true, trim: true }, // Primary display name
+        slug: { type: String, required: true, lowercase: true, trim: true }, // URL-friendly identifier derived from name
+        brand: { type: String, trim: true }, // Brand attribution (e.g. 'Roadster')
+        description: { type: String }, // Long-form rich text or HTML description
 
-        product_attributes: { type: [ProductAttributeSchema], default: [] },
+        // === SHARED / GLOBAL ATTRIBUTES ===
+        product_attributes: { type: [ProductAttributeSchema], default: [] }, // Non-variant specs (e.g., {name: 'Material', value: 'Cotton'})
 
-        base_price: { type: Number, required: true, min: 0 },
-        base_compare_at_price: { type: Number, min: 0 },
+        // === PRICING (Defaults) ===
+        base_price: { type: Number, required: true, min: 0 }, // Master selling price (used if variant has no override)
+        base_compare_at_price: { type: Number, min: 0 }, // Master 'original' strikethrough price to show discounts
         
+        // === MEDIA ===
+        cover_images: { type: [String], default: [] }, // General product gallery images shown on category/search pages
 
-        cover_images: { type: [String], default: [] },
+        // === METADATA & DISCOVERABILITY ===
+        gender: { type: String, enum: ['men', 'women', 'unisex', 'kids', 'boys', 'girls'] }, // Target demographic for filtering
+        tags: [{ type: String, lowercase: true, trim: true }], // Tags for internal organization, SEO, or search (e.g. 'summer-sale')
 
-        gender: { type: String, enum: ['men', 'women', 'unisex', 'kids', 'boys', 'girls'] },
-        tags: [{ type: String, lowercase: true, trim: true }],
+        // === LIFECYCLE ===
+        status: { type: String, enum: ['draft', 'active', 'inactive'], default: 'draft' }, // Controls visibility on storefront
+        is_featured: { type: Boolean, default: false }, // Pin to top/featured collections on storefront
 
-        status: { type: String, enum: ['draft', 'active', 'inactive'], default: 'draft' },
-        is_featured: { type: Boolean, default: false },
-
-        total_stock: { type: Number, default: 0 },
-        color_count: { type: Number, default: 0 },
-        rating: { type: Number, default: 0, min: 0, max: 5 },
-        total_reviews: { type: Number, default: 0 },
+        // === AGGREGATED CACHE (Usually updated via hooks/cron) ===
+        total_stock: { type: Number, default: 0 }, // Sum of all child products' stock_quantity
+        color_count: { type: Number, default: 0 }, // Quantity of unique color variants (used for "Available in 3 colors" UI)
+        rating: { type: Number, default: 0, min: 0, max: 5 }, // Average review score
+        total_reviews: { type: Number, default: 0 }, // Total number of reviews received for this parent
     },
     { timestamps: true }
 );
 
 const ChildProductSchema = new Schema<IChildProduct>(
     {
-        parent_id: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-        store_id: { type: Schema.Types.ObjectId, ref: 'Store', required: true },
-        retailer_id: { type: Schema.Types.ObjectId, ref: 'Retailer', required: true },
-        categories: { type: [String], default: [] },
+        // === CORE RELATIONS ===
+        parent_id: { type: Schema.Types.ObjectId, ref: 'Product', required: true }, // Links to the master Product document
+        store_id: { type: Schema.Types.ObjectId, ref: 'Store', required: true }, // Denormalized for faster direct queries and security
+        retailer_id: { type: Schema.Types.ObjectId, ref: 'Retailer', required: true }, // Denormalized for authorization checks
+        categories: { type: [String], default: [] }, // Denormalized from parent for independent variant filtering
 
-        color: { type: String, trim: true },
-        color_hex: { type: String, trim: true },
-        size: { type: String, trim: true },
-        length: { type: String, trim: true },
-        custom_variation_attributes: { type: [ProductAttributeSchema], default: [] },
+        // === VARIATION PERMUTATION DEFS ===
+        color: { type: String, trim: true }, // e.g., 'Red'
+        color_hex: { type: String, trim: true }, // e.g., '#FF0000' (used to draw color swatches in UI)
+        size: { type: String, trim: true }, // e.g., 'XL'
+        length: { type: String, trim: true }, // e.g., 'Long', '32' (often used in pants)
+        custom_variation_attributes: { type: [ProductAttributeSchema], default: [] }, // For any axis not covered above
 
-        sku: { type: String, required: true, trim: true },
-        barcode: { type: String, trim: true },
-        variant_label: { type: String, default: '' },
+        // === IDENTIFIERS ===
+        sku: { type: String, required: true, trim: true }, // UNIQUE Stock Keeping Unit for this exact variation
+        barcode: { type: String, trim: true }, // UPC/EAN for physical scanning
+        variant_label: { type: String, default: '' }, // Auto-generated human-readable label: "Red / XL"
 
-        price: { type: Number, required: true, min: 0 },
-        compare_at_price: { type: Number, min: 0 },
-        cost_price: { type: Number, min: 0, select: false },
+        // === EXPLICIT VARIANT PRICING ===
+        price: { type: Number, required: true, min: 0 }, // Actual selling cost of this specific variant
+        compare_at_price: { type: Number, min: 0 }, // Original price for this variant
+        cost_price: { type: Number, min: 0, select: false }, // Internal cost to retailer (hidden from API by default via select: false)
 
-        stock_quantity: { type: Number, required: true, default: 0, min: 0 },
-        reserved_quantity: { type: Number, default: 0, min: 0 },
+        // === INVENTORY MANAGEMENT ===
+        stock_quantity: { type: Number, required: true, default: 0, min: 0 }, // Total physical units sitting in warehouse
+        reserved_quantity: { type: Number, default: 0, min: 0 }, // Units placed in active checkouts/carts but not yet deducted
 
-        images: { type: [String], default: [] },
+        // === OVERRIDES ===
+        images: { type: [String], default: [] }, // Specific images ONLY for this variant (e.g. photos of the Red shirt)
 
+        // === PHYSICAL DIMENSIONS (For Shipping Calculations) ===
         weight_grams: { type: Number },
         length_cm: { type: Number },
         width_cm: { type: Number },
         height_cm: { type: Number },
 
-        is_active: { type: Boolean, default: true },
+        // === LIFECYCLE ===
+        is_active: { type: Boolean, default: true }, // If false, this variant is hidden from users even if Parent is Active
     },
     { timestamps: true }
 );
