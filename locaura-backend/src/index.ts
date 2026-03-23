@@ -4,6 +4,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { Logger } from './utils/logger';
+import { error_handler } from './middlewares/error_middleware';
 import auth_routes from './Retailer/routes/auth_routes';
 import store_routes from './Retailer/routes/store.routes';
 import product_routes from './Retailer/routes/product.routes';
@@ -52,6 +53,9 @@ app.use('/api/v1/consumers/auth', consumer_auth_routes); // Consumer auth
 app.use('/api/v1/consumers/cart', consumer_cart_routes); // Consumer Cart
 app.use('/api/v1/consumers/checkout', consumer_checkout_routes); // Consumer Checkout
 
+// Error handling - Add at the end of all routes
+app.use(error_handler);
+
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
@@ -60,8 +64,3 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 export default app;
-// sample log
-// Logger.info('This is an info message', 'Sample');
-// Logger.success('This is a success message', 'Sample');
-// Logger.warn('This is a warning message', 'Sample');
-// Logger.error('This is an error message', 'Sample');
