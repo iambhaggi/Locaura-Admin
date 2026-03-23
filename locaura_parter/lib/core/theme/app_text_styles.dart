@@ -100,4 +100,4 @@ abstract class AppTextStyles {
     letterSpacing: 0.5,
     height: 1.45,
   );
-}
+}
