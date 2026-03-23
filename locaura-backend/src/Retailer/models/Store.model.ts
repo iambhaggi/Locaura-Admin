@@ -18,9 +18,8 @@ export interface IStore extends Document {
     banner_url?: string;
 
     // contact & social
-    retailer_name: string;
-    retailer_phone: string;
-    retailer_email: string;
+    store_phone: string;
+    store_email: string;
     social_links?: ISocialLinks;
 
     // location / Pickup Address
@@ -67,9 +66,8 @@ const StoreSchema: Schema = new Schema({
     },
     logo_url: { type: String },
     banner_url: { type: String },
-    retailer_name: { type: String, required: true },
-    retailer_phone: { type: String, required: true },
-    retailer_email: { type: String, required: true },
+    store_phone: { type: String, required: true },
+    store_email: { type: String, required: true },
     social_links: { type: SocialLinksSchema, default: {} },
     address: { type: AddressSchema, default: {} },
     location: { type: LocationSchema, default: { type: 'Point', coordinates: [0, 0] } },
