@@ -35,7 +35,7 @@ class MainDashboardScreen extends StatelessWidget {
           children: [
             _buildNavItem(0, Icons.home, Icons.home_outlined, 'Home'),
             _buildNavItem(1, Icons.shopping_bag, Icons.shopping_bag_outlined, 'Orders'),
-            _buildNavItem(2, Icons.bar_chart, Icons.bar_chart_outlined, 'Inventory'),
+            _buildNavItem(2, Icons.inventory_2, Icons.inventory_2_outlined, 'Inventory'),
             _buildNavItem(3, Icons.person, Icons.person_outline, 'Profile'),
           ],
         ),
