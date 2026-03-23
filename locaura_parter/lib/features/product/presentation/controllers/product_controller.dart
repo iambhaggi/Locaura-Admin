@@ -66,6 +66,17 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<ProductEntity?> getProductDetailsData(String storeId, String productId) async {
+    final result = await _getProductDetails(storeId: storeId, productId: productId);
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (product) => product,
+    );
+  }
+
   Future<void> fetchStoreProducts(String storeId, {Map<String, dynamic>? filters}) async {
     state = const ProductState.loading();
     final result = await _getStoreProducts(storeId: storeId, filters: filters);
@@ -108,6 +119,41 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<ProductEntity?> createProductData(String storeId, {
+    required String name,
+    String? brand,
+    String? description,
+    required double basePrice,
+    required List<String> categories,
+    required List<ProductAttributeEntity> productAttributes,
+    required List<String> coverImages,
+    String? gender,
+    required List<String> tags,
+  }) async {
+    final result = await _createProduct(
+      storeId: storeId,
+      name: name,
+      brand: brand,
+      description: description,
+      basePrice: basePrice,
+      categories: categories,
+      productAttributes: productAttributes,
+      coverImages: coverImages,
+      gender: gender,
+      tags: tags,
+    );
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (product) {
+        fetchStoreProducts(storeId);
+        return product;
+      },
+    );
+  }
+
   Future<void> updateExistingProduct(String storeId, String productId, Map<String, dynamic> updateData) async {
     state = const ProductState.loading();
     final result = await _updateProduct(storeId: storeId, productId: productId, updateData: updateData);
@@ -116,6 +162,20 @@ class ProductController extends StateNotifier<ProductState> {
       (product) {
         state = ProductState.productUpdated(product);
         fetchStoreProducts(storeId);
+      },
+    );
+  }
+
+  Future<ProductEntity?> updateProductData(String storeId, String productId, Map<String, dynamic> updateData) async {
+    final result = await _updateProduct(storeId: storeId, productId: productId, updateData: updateData);
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (product) {
+        fetchStoreProducts(storeId);
+        return product;
       },
     );
   }
@@ -138,6 +198,17 @@ class ProductController extends StateNotifier<ProductState> {
     result.fold(
       (failure) => state = ProductState.error(failure.message),
       (variants) => state = ProductState.variantsLoaded(variants),
+    );
+  }
+
+  Future<List<ProductVariantEntity>?> getProductVariantsData(String storeId, String productId) async {
+    final result = await _getProductVariants(storeId: storeId, productId: productId);
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (variants) => variants,
     );
   }
 
@@ -173,6 +244,17 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<ProductVariantEntity?> createVariantData(String storeId, String productId, Map<String, dynamic> variantData) async {
+    final result = await _createVariant(storeId: storeId, productId: productId, variantData: variantData);
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (variant) => variant,
+    );
+  }
+
   Future<void> updateExistingVariant(String storeId, String productId, String variantId, Map<String, dynamic> updateData) async {
     state = const ProductState.loading();
     final result = await _updateVariant(
@@ -190,6 +272,22 @@ class ProductController extends StateNotifier<ProductState> {
     );
   }
 
+  Future<ProductVariantEntity?> updateVariantData(String storeId, String productId, String variantId, Map<String, dynamic> updateData) async {
+    final result = await _updateVariant(
+      storeId: storeId,
+      productId: productId,
+      variantId: variantId,
+      updateData: updateData,
+    );
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return null;
+      },
+      (variant) => variant,
+    );
+  }
+
   Future<void> deleteExistingVariant(String storeId, String productId, String variantId) async {
     state = const ProductState.loading();
     final result = await _deleteVariant(
@@ -203,6 +301,21 @@ class ProductController extends StateNotifier<ProductState> {
         state = const ProductState.variantDeleted();
         fetchVariants(storeId, productId);
       },
+    );
+  }
+
+  Future<bool> deleteVariantData(String storeId, String productId, String variantId) async {
+    final result = await _deleteVariant(
+      storeId: storeId,
+      productId: productId,
+      variantId: variantId,
+    );
+    return result.fold(
+      (failure) {
+        state = ProductState.error(failure.message);
+        return false;
+      },
+      (_) => true,
     );
   }
 }

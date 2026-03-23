@@ -1,3 +1,5 @@
+// ignore_for_file: invalid_annotation_target
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:locaura_parter/features/auth/domain/entities/retailer.entity.dart';
 

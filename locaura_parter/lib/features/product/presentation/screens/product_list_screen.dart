@@ -164,11 +164,29 @@ class _ProductCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSizes.s4),
-                  Text(
-                    '₹${product.basePrice}',
-                    style: context.textTheme.bodyLarge?.copyWith(
-                      color: context.colorScheme.primary,
-                      fontWeight: FontWeight.w900,
+                  // strike through price with discount and final price in rich text
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        if (product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0)
+                          TextSpan(
+                            text: '₹${product.basePrice} ',
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                              decoration: TextDecoration.lineThrough,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        TextSpan(
+                          text: product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0
+                              ? '₹${product.baseCompareAtPrice}'
+                              : '₹${product.basePrice}',
+                          style: context.textTheme.bodyLarge?.copyWith(
+                            color: context.colorScheme.primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: AppSizes.s4),

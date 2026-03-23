@@ -135,63 +135,91 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                       ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final product = products[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(12.r),
-                                  ),
-                                  child: AppImage(
-                                    imageUrl: null,
-                                    height: 150.h,
-                                    width: double.infinity,
-                                    fit: BoxFit.cover,
+                        return GestureDetector(
+                          onTap: () {
+                            if (_selectedStore != null) {
+                              context.push(
+                                AppRoutes.productForm.replaceAll(':storeId', _selectedStore!.id),
+                                extra: product.id,
+                              );
+                            }
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(12.r),
+                                    ),
+                                    child: AppImage(
+                                      imageUrl: product.coverImages.isNotEmpty
+                                          ? product.coverImages.first
+                                          : null,
+                                      height: 150.h,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.all(8.w),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      product.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontSize: 14.sp,
-                                        fontWeight: FontWeight.w600,
+                                Padding(
+                                  padding: EdgeInsets.all(8.w),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 14.sp,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: 4.h),
-                                    Text(
-                                      currencyFormatter.format(
-                                        product.basePrice,
+                                      SizedBox(height: 4.h),
+                                      Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            if (product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0)
+                                              TextSpan(
+                                                text: '${currencyFormatter.format(product.basePrice)} ',
+                                                style: TextStyle(
+                                                  fontSize: 11.sp,
+                                                  color: Colors.grey.shade500,
+                                                  decoration: TextDecoration.lineThrough,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            TextSpan(
+                                              text: product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0
+                                                  ? currencyFormatter.format(product.baseCompareAtPrice)
+                                                  : currencyFormatter.format(product.basePrice),
+                                              style: TextStyle(
+                                                fontSize: 13.sp,
+                                                color: const Color(0xFFFA641E),
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      style: TextStyle(
-                                        fontSize: 13.sp,
-                                        color: const Color(0xFFFA641E),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         );
                       }, childCount: products.length),
@@ -710,7 +738,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
       children: [
         FloatingActionButton.extended(
           heroTag: 'upload_product',
-          onPressed: () {},
+          onPressed: () {
+            if (_selectedStore != null) {
+              context.push(
+                AppRoutes.productForm.replaceAll(':storeId', _selectedStore!.id),
+              );
+            } else {
+              context.showSnackbar('Please select a store first to add products', isError: true);
+            }
+          },
           backgroundColor: const Color(0xFF0D47A1),
           foregroundColor: Colors.white,
           elevation: 4,
