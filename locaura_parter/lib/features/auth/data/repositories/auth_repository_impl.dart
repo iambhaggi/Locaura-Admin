@@ -64,6 +64,38 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  ApiResult<RetailerEntity> updateProfile({
+    String? retailerName,
+    String? email,
+    String? panCard,
+  }) async {
+    try {
+      final currentProfile = await getPersistedProfile();
+      if (currentProfile == null) return Left(ServerFailure(message: 'Profile not found'));
+
+      final response = await _remote.updateProfile(
+        retailerName: retailerName,
+        email: email,
+        panCard: panCard,
+      );
+      final entity = response.toEntity(
+        token: currentProfile.token,
+        stores: currentProfile.stores,
+      );
+
+      // Update persisted profile
+      await _prefs.setString(
+        AppConstants.retailerProfileKey,
+        jsonEncode(entity.toJson()),
+      );
+
+      return Right(entity);
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
   Future<RetailerEntity?> getPersistedProfile() async {
     final profileJson = _prefs.getString(AppConstants.retailerProfileKey);
     if (profileJson != null) {

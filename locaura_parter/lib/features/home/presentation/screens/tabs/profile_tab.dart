@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locaura_parter/core/theme/app_colors.dart';
 import 'package:locaura_parter/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:locaura_parter/core/router/app_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class ProfileTab extends ConsumerStatefulWidget {
@@ -39,12 +40,8 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, size: 20.sp, color: AppColors.black),
-          onPressed: () => context.pop(),
-        ),
         title: Text(
-          'Profile',
+          'Retailer Profile',
           style: TextStyle(
             color: AppColors.black,
             fontSize: 18.sp,
@@ -65,7 +62,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               _buildMenuItem(
                 icon: Icons.person_outline,
                 title: 'Edit Profile',
-                onTap: () {},
+                onTap: () => context.push(AppRoutes.editProfile, extra: retailer),
               ),
               _buildMenuItem(
                 icon: Icons.account_balance_outlined,

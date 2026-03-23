@@ -6,6 +6,7 @@ class ApiEndpoints {
   static const String sendOtp = '$_base/auth/send-otp';
   static const String verifyOtp = '$_base/auth/verify-otp';
   static const String getProfile = '$_base/auth/retailer/me';
+  static const String updateProfile = '$_base/auth/complete-profile';
 
   // Stores
   static const String stores = '$_base/stores';

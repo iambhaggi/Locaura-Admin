@@ -29,4 +29,25 @@ class AuthRemoteDataSource extends ApiService {
       (data) => VerifyOtpResponseModel.fromJson(data),
     );
   }
+
+  Future<RetailerModel> updateProfile({
+    String? retailerName,
+    String? email,
+    String? panCard,
+  }) async {
+    final result = await postRequest<Map<String, dynamic>>(
+      path: ApiEndpoints.updateProfile,
+      body: {
+        if (retailerName != null) 'retailer_name': retailerName,
+        if (email != null) 'email': email,
+        if (panCard != null) 'pan_card': panCard,
+      },
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+
+    return result.fold(
+      (failure) => throw failure,
+      (data) => RetailerModel.fromJson(data['data']['retailer'] as Map<String, dynamic>),
+    );
+  }
 }

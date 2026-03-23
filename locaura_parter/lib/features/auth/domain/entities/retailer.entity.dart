@@ -12,6 +12,7 @@ class RetailerEntity with _$RetailerEntity {
     required bool emailVerified,
     String? email,
     String? retailerName,
+    String? panCard,
     required String token,
     required List<StoreSummaryEntity> stores,
   }) = _RetailerEntity;

@@ -56,6 +56,31 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   void reset() => state = const AuthState.initial();
+
+  Future<void> updateProfile({
+    String? retailerName,
+    String? email,
+    String? panCard,
+  }) async {
+    final currentState = state;
+    if (currentState is! _Authenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.updateProfile(
+      retailerName: retailerName,
+      email: email,
+      panCard: panCard,
+    );
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        // Revert to authenticated with old data if error, but wait some time or show error
+        state = AuthState.authenticated(currentState.consumer);
+      },
+      (retailer) => state = AuthState.authenticated(retailer),
+    );
+  }
 }
 
 final authControllerProvider =

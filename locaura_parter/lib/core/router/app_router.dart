@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:locaura_parter/features/auth/domain/entities/retailer.entity.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../utils/app_constants.dart';
 import '../../features/auth/presentation/screens/phone_screen.dart';
@@ -14,6 +15,7 @@ import '../../features/home/presentation/screens/tabs/profile_tab.dart';
 import '../../features/store/presentation/screens/store_form_screen.dart';
 import '../../features/product/presentation/screens/product_list_screen.dart';
 import '../../features/product/presentation/screens/product_form_screen.dart';
+import '../../features/auth/presentation/screens/edit_profile_screen.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -134,6 +136,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 name: 'profile',
                 builder: (_, __) => const ProfileTab(),
               ),
+              GoRoute(
+                path: AppRoutes.editProfile,
+                name: 'editProfile',
+                builder: (context, state) {
+                  final extra = state.extra;
+                  RetailerEntity? retailer;
+                  if (extra is RetailerEntity) {
+                    retailer = extra;
+                  } else if (extra is Map<String, dynamic>) {
+                    retailer = RetailerEntity.fromJson(extra);
+                  }
+
+                  if (retailer == null) {
+                    return const Scaffold(
+                      body: Center(child: Text('Error: No retailer data found')),
+                    );
+                  }
+                  return EditProfileScreen(retailer: retailer);
+                },
+              ),
             ],
           ),
         ],
@@ -141,7 +163,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
 
 abstract class AppRoutes {
   static const phone = '/auth/phone';
@@ -154,4 +175,5 @@ abstract class AppRoutes {
   static const editStore = '/store/edit/:id';
   static const productList = '/store/:storeId/products';
   static const productForm = '/store/:storeId/product-form';
+  static const editProfile = '/profile/edit';
 }

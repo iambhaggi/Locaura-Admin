@@ -13,6 +13,7 @@ extension VerifyOtpResponseModelX on VerifyOtpResponseModel {
         emailVerified: retailer.emailVerified,
         email: retailer.email,
         retailerName: retailer.retailerName,
+        panCard: retailer.panCard,
         token: token,
         stores: stores
             .map((s) => StoreSummaryEntity(
@@ -46,6 +47,7 @@ class RetailerModel with _$RetailerModel {
     @JsonKey(name: 'email_verified') required bool emailVerified,
     String? email,
     @JsonKey(name: 'retailer_name') String? retailerName,
+    @JsonKey(name: 'pan_card') String? panCard,
     @JsonKey(name: 'otp_expiry') String? otpExpiry,
     @JsonKey(name: 'createdAt') required String createdAt,
     @JsonKey(name: 'updatedAt') required String updatedAt,
@@ -53,6 +55,25 @@ class RetailerModel with _$RetailerModel {
 
   factory RetailerModel.fromJson(Map<String, dynamic> json) =>
       _$RetailerModelFromJson(json);
+}
+
+extension RetailerModelX on RetailerModel {
+  RetailerEntity toEntity({
+    required String token,
+    required List<StoreSummaryEntity> stores,
+  }) {
+    return RetailerEntity(
+      id: id,
+      phone: phone,
+      phoneVerified: phoneVerified,
+      emailVerified: emailVerified,
+      email: email,
+      retailerName: retailerName,
+      panCard: panCard,
+      token: token,
+      stores: stores,
+    );
+  }
 }
 
 // ─── Store summary (only what verify-otp returns) ──────────────────────────

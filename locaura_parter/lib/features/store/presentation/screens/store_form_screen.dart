@@ -39,7 +39,6 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
   final _descController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _retailerNameController = TextEditingController();
 
   // Address
   final _shopNoController = TextEditingController();
@@ -106,8 +105,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
         _descController.text =
             'Premium casual wear and trendy outfits for men and women.';
         _phoneController.text = '9876543210';
-        _emailController.text = 'rahul.sharma@example.com';
-        _retailerNameController.text = 'Rahul Sharma';
+        _emailController.text = 'urban_threads@example.com';
         _shopNoController.text = '102-B';
         _buildingController.text = 'Skyline Heights';
         _streetController.text = '100ft Ring Road';
@@ -135,9 +133,8 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
   void _prefillFromStore(StoreEntity store) {
     _nameController.text = store.storeName;
     _descController.text = store.description ?? '';
-    _phoneController.text = store.retailerPhone;
-    _emailController.text = store.retailerEmail;
-    _retailerNameController.text = store.retailerName;
+    _phoneController.text = store.storePhone;
+    _emailController.text = store.storeEmail;
     _shopNoController.text = store.address?.shopNumber ?? '';
     _buildingController.text = store.address?.buildingName ?? '';
     _streetController.text = store.address?.street ?? '';
@@ -181,7 +178,6 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
     _descController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _retailerNameController.dispose();
     _shopNoController.dispose();
     _buildingController.dispose();
     _streetController.dispose();
@@ -282,9 +278,8 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
         'store_name': _nameController.text,
         'description': _descController.text,
         'business_type': _businessType,
-        'retailer_name': _retailerNameController.text,
-        'retailer_phone': _phoneController.text,
-        'retailer_email': _emailController.text,
+        'store_phone': _phoneController.text,
+        'store_email': _emailController.text,
         'social_links': {
           'instagram': _instaController.text,
           'whatsapp': _whatsappController.text,
@@ -471,27 +466,20 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
       subtitle:
           'Provide the primary contact information and\nsocial profiles for this hub.',
       children: [
-        _buildLabel('Retailer Name'),
-        _buildTextField(
-          controller: _retailerNameController,
-          hint: 'e.g. John Doe',
-          validator: (v) => v!.isEmpty ? 'Retailer name is required' : null,
-        ),
-        SizedBox(height: 20.h),
-        _buildLabel('Retailer Phone'),
+        _buildLabel('Store Phone'),
         _buildTextField(
           controller: _phoneController,
           hint: 'e.g. +91 9876543210',
           keyboardType: TextInputType.phone,
-          validator: (v) => v!.isEmpty ? 'Phone is required' : null,
+          validator: (v) => v!.isEmpty ? 'Store phone is required' : null,
         ),
         SizedBox(height: 20.h),
-        _buildLabel('Retailer Email'),
+        _buildLabel('Store Email'),
         _buildTextField(
           controller: _emailController,
-          hint: 'e.g. john@example.com',
+          hint: 'e.g. store@example.com',
           keyboardType: TextInputType.emailAddress,
-          validator: (v) => v!.isEmpty ? 'Email is required' : null,
+          validator: (v) => v!.isEmpty ? 'Store email is required' : null,
         ),
         SizedBox(height: 24.h),
         _buildLabel('Social Presence (Optional)'),
@@ -734,7 +722,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
         Wrap(
           spacing: 8.w,
           runSpacing: 4.h,
-          children: ['Groceries', 'Pharmacy', 'Fashion', 'Electronics', 'Home Decor', 'Food']
+          children: ['Clothing']
               .map((cat) {
             final isSelected = _selectedCategories.contains(cat);
             return FilterChip(
