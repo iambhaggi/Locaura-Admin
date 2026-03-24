@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locaura_parter/core/router/app_router.dart';
+import 'package:locaura_parter/core/theme/app_text_styles.dart';
 import 'package:locaura_parter/features/store/presentation/controllers/store_controller.dart';
 import 'package:locaura_parter/features/store/domain/entities/store.entity.dart';
 
@@ -83,20 +84,15 @@ class _HomeTabState extends ConsumerState<HomeTab> {
                 children: [
                   Text(
                     'Level Up Your Business',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: AppTextStyles.titleLarge.copyWith(color: Colors.white),
                   ),
                   SizedBox(height: 12.h),
                   SizedBox(
                     width: 220.w,
                     child: Text(
                       'Complete your profile to unlock premium seller features.',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 14.sp,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
                         height: 1.4,
                       ),
                     ),

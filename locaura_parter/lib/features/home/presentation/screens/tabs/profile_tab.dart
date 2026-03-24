@@ -54,7 +54,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           child: Column(
             children: [
               SizedBox(height: 24.h),
-              _buildHeader(retailer.retailerName ?? 'Retailer Name', retailer.id),
+              _buildHeader(retailer.retailerName ?? 'Retailer Name', retailer.id,retailer.phoneVerified),
               SizedBox(height: 32.h),
               _buildStatsRow(),
               SizedBox(height: 32.h),
@@ -114,7 +114,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     );
   }
 
-  Widget _buildHeader(String name, String id) {
+  Widget _buildHeader(String name, String id, bool is_verified) {
     return Column(
       children: [
         Stack(
@@ -164,7 +164,8 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
           ),
         ),
         SizedBox(height: 8.h),
-        Row(
+
+        if(is_verified) Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.check_circle, color: AppColors.success, size: 16.sp),

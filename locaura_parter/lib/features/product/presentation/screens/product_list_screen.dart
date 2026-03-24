@@ -130,7 +130,7 @@ class _ProductCard extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: Colors.grey.shade200,
+                color: Colors.grey.shade100,
                 child: product.coverImages.isNotEmpty
                     ? AppImage(
                         imageUrl: product.coverImages.first,

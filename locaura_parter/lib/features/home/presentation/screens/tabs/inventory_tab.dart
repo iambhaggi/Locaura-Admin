@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:locaura_parter/core/extensions/context_extensions.dart';
 import 'package:locaura_parter/core/router/app_router.dart';
+import 'package:locaura_parter/core/theme/app_text_styles.dart';
 import 'package:locaura_parter/core/utils/app_sizes.dart';
 import 'package:locaura_parter/core/widgets/common/app_image.dart';
 import 'package:locaura_parter/features/product/presentation/controllers/product_controller.dart';
@@ -115,7 +116,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
         sliver: SliverToBoxAdapter(
           child: Text(
             'Products',
-            style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            style: AppTextStyles.titleMedium,
           ),
         ),
       ),
@@ -125,7 +126,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
             success: (products) => SliverPadding(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               sliver: products.isEmpty
-                  ? SliverToBoxAdapter(child: Text('No products'))
+                  ? SliverToBoxAdapter(child: Text('No products', style: AppTextStyles.bodyMedium))
                   : SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -181,12 +182,9 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                                     children: [
                                       Text(
                                         product.name,
-                                        maxLines: 1,
+                                        maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          fontSize: 14.sp,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: AppTextStyles.bodyMedium.copyWith(color: Colors.black),
                                       ),
                                       SizedBox(height: 4.h),
                                       Text.rich(
@@ -195,21 +193,17 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                                             if (product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0)
                                               TextSpan(
                                                 text: '${currencyFormatter.format(product.basePrice)} ',
-                                                style: TextStyle(
-                                                  fontSize: 11.sp,
+                                                style: AppTextStyles.labelSmall.copyWith(
                                                   color: Colors.grey.shade500,
                                                   decoration: TextDecoration.lineThrough,
-                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
                                             TextSpan(
                                               text: product.baseCompareAtPrice != null && product.baseCompareAtPrice! > 0
                                                   ? currencyFormatter.format(product.baseCompareAtPrice)
                                                   : currencyFormatter.format(product.basePrice),
-                                              style: TextStyle(
-                                                fontSize: 13.sp,
+                                              style: AppTextStyles.labelMedium.copyWith(
                                                 color: const Color(0xFFFA641E),
-                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ],
@@ -259,11 +253,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                       children: [
                         Text(
                           _selectedStore!.isActive ? 'online' : 'offline',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.sp,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelSmall.copyWith(color: Colors.white),
                         ),
                         SizedBox(width: 4.w),
                         AnimatedAlign(
@@ -333,20 +323,14 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                           children: [
                             Text(
                               _selectedStore?.storeName ?? 'Select Hub',
-                              style: TextStyle(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Icon(Icons.keyboard_arrow_down, size: 20.sp),
                           ],
                         ),
                         Text(
                           'Merchant ID: #${_selectedStore?.id.substring(0, 5) ?? '00000'}',
-                          style: TextStyle(
-                            fontSize: 12.sp,
-                            color: Colors.grey.shade500,
-                          ),
+                          style: AppTextStyles.bodySmall.copyWith(color: Colors.grey.shade500),
                         ),
                       ],
                     ),
@@ -606,10 +590,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                 SizedBox(width: 8.w),
                 Text(
                   'Recent Orders',
-                  style: TextStyle(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.titleSmall,
                 ),
               ],
             ),
@@ -617,10 +598,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
               onPressed: () {},
               child: Text(
                 'View All',
-                style: TextStyle(
-                  color: const Color(0xFF1976D2),
-                  fontSize: 14.sp,
-                ),
+                style: AppTextStyles.labelLarge.copyWith(color: const Color(0xFF1976D2)),
               ),
             ),
           ],
@@ -679,17 +657,11 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                   children: [
                     Text(
                       order['title'] as String,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: AppTextStyles.titleSmall,
                     ),
                     Text(
                       'Order ${order['id']} • ${order['time']}',
-                      style: TextStyle(
-                        fontSize: 11.sp,
-                        color: Colors.grey.shade500,
-                      ),
+                      style: AppTextStyles.bodySmall.copyWith(color: Colors.grey.shade500),
                     ),
                   ],
                 ),
@@ -699,10 +671,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                 children: [
                   Text(
                     order['price'] as String,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: AppTextStyles.titleSmall,
                   ),
                   Container(
                     padding: EdgeInsets.symmetric(
@@ -715,10 +684,8 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                     ),
                     child: Text(
                       order['status'] as String,
-                      style: TextStyle(
-                        fontSize: 10.sp,
+                      style: AppTextStyles.labelSmall.copyWith(
                         color: order['iconColor'] as Color,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -751,7 +718,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
           foregroundColor: Colors.white,
           elevation: 4,
           icon: const Icon(Icons.add_circle_outline),
-          label: const Text('Upload New Product'),
+          label: Text('Upload New Product', style: AppTextStyles.labelLarge.copyWith(color: Colors.white)),
         ),
         SizedBox(height: 12.h),
         FloatingActionButton.extended(
@@ -761,9 +728,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
           foregroundColor: Colors.white,
           elevation: 4,
           icon: const Icon(Icons.add_circle_outline),
-          label: const Text(
-            'New Store          ',
-          ), // Spacing to match widths approx
+          label: Text('New Store', style: AppTextStyles.labelLarge.copyWith(color: Colors.white)),
         ),
       ],
     );

@@ -40,21 +40,21 @@ abstract class AppTextStyles {
 
   static TextStyle titleLarge = GoogleFonts.inter(
     fontSize: 22.sp,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w400,
     letterSpacing: 0,
     height: 1.27,
   );
 
   static TextStyle titleMedium = GoogleFonts.inter(
     fontSize: 16.sp,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     letterSpacing: 0.15,
     height: 1.5,
   );
 
   static TextStyle titleSmall = GoogleFonts.inter(
     fontSize: 14.sp,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w400,
     letterSpacing: 0.1,
     height: 1.43,
   );
