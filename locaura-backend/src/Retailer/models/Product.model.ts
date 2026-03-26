@@ -212,7 +212,6 @@ const ChildProductSchema = new Schema<IChildProduct>(
 
 // Parent — all listing/browse queries
 ParentProductSchema.index({ store_id: 1, status: 1 });
-ParentProductSchema.index({ store_id: 1, status: 1 });
 // ParentProductSchema.index({ store_id: 1, slug: 1 });
 ParentProductSchema.index({ store_id: 1, brand: 1, status: 1 });
 ParentProductSchema.index({ store_id: 1, gender: 1, status: 1 });

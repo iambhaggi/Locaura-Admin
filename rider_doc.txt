@@ -1,0 +1,8 @@
+1. Rider Registers with phone number and name
+2. Document Pan , license, vehicle details, Rider photo, Bank details.
+3. Admin verifies the documents and approves the rider.
+4. Rider can login and set his status to online and available.
+5. When a order is generated, it is assigned to the nearest available rider.
+6. Rider can accept or reject the order.
+7. If accepted, rider can navigate to the retailer location and pick up the order.
+8. Once the order is picked up, the rider can navigate to the customer location and deliver the order.

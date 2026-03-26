@@ -13,15 +13,19 @@ export class OrderRepository {
     async find_by_store(store_id: string): Promise<IOrder[]> {
         return OrderModel.find({ store_id }).sort({ createdAt: -1 });
     }
+    
+    async find_by_status(status: string): Promise<IOrder[]> {
+        return OrderModel.find({ status }).sort({ createdAt: -1 });
+    }
 
     async find_by_consumer(consumer_id: string): Promise<IOrder[]> {
         return OrderModel.find({ consumer_id }).sort({ createdAt: -1 });
     }
 
-    async update(order_id: string, update_data: Partial<IOrder>): Promise<IOrder | null> {
+    async update(order_id: string, update_data: any): Promise<IOrder | null> {
         return OrderModel.findByIdAndUpdate(
             order_id, 
-            { $set: update_data }, 
+            update_data, 
             { new: true }
         );
     }

@@ -16,6 +16,9 @@ export interface IRetailer extends Document {
     otp?: string;
     otp_expiry?: Date;
 
+    // Push Notifications
+    fcm_token?: string;
+
 }
 
 const RetailerSchema: Schema = new Schema({
@@ -29,6 +32,8 @@ const RetailerSchema: Schema = new Schema({
 
     otp: { type: String },
     otp_expiry: { type: Date },
+
+    fcm_token: { type: String },
 
 }, { timestamps: true });
 

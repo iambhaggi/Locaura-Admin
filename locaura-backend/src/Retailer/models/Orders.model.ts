@@ -1,21 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-
-// ─── Enums (Can be moved to src/enums/order.enum.ts later) ───────────────
-export enum OrderStatus {
-  PENDING = 'PENDING',
-  ACCEPTED = 'ACCEPTED',
-  PACKED = 'PACKED',
-  SHIPPED = 'SHIPPED',
-  DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED'
-}
-
-export enum PaymentStatus {
-  PENDING = 'PENDING',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED'
-}
+import { OrderStatus, PaymentStatus } from '../enums/order.enum';
 
 // ─── Order Line Item (Snapshotting Variants) ─────────────────────────────
 export interface IOrderItem {

@@ -12,14 +12,12 @@ export class CheckoutController {
                 return res.status(401).json({ success: false, message: 'Unauthorized' });
             }
 
-            const order = await this.checkout_service.process_checkout(consumer_id, req.body);
+            const result = await this.checkout_service.process_checkout(consumer_id, req.body);
             
             res.status(201).json({
                 success: true,
                 message: 'Order created successfully',
-                data: {
-                    order
-                }
+                data: result
             });
         } catch (error: any) {
             Logger.error(`Checkout processing failed for consumer ${req.user?.id}`, error);

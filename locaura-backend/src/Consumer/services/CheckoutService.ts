@@ -2,7 +2,10 @@ import { OrderRepository } from '../../Retailer/repositories/OrderRepository';
 import { StoreRepository } from '../../Retailer/repositories/StoreRepository';
 import { ProductRepository } from '../../Retailer/repositories/ProductRepository';
 import { ConsumerRepository } from '../repositories/ConsumerRepository';
-import { IOrder, IOrderItem, OrderStatus, PaymentStatus } from '../../Retailer/models/Orders.model';
+import { IOrder, IOrderItem } from '../../Retailer/models/Orders.model';
+import { OrderStatus, PaymentStatus } from '../../Retailer/enums/order.enum';
+import PaymentModel from '../../Retailer/models/Payment.model';
+import { PaymentService } from './PaymentService';
 import { Logger } from '../../utils/logger';
 
 export class CheckoutService {
@@ -10,8 +13,9 @@ export class CheckoutService {
     private store_repository = new StoreRepository();
     private product_repository = new ProductRepository();
     private consumer_repository = new ConsumerRepository();
+    private payment_service = new PaymentService();
 
-    async process_checkout(consumer_id: string, checkout_payload: any): Promise<IOrder | null> {
+    async process_checkout(consumer_id: string, checkout_payload: any): Promise<{ order: IOrder, razorpay_order?: any }> {
         const { delivery_address_id, payment_method, special_instructions } = checkout_payload;
 
         // 1. Verify consumer and get the specific address
@@ -122,12 +126,43 @@ export class CheckoutService {
 
         const created_order = await this.order_repository.create(order_data);
 
-        // 6. Clear the cart
+        // 6. Create Payment Record
+        const payment_data = {
+            order_id: created_order._id,
+            consumer_id: created_order.consumer_id,
+            retailer_id: created_order.retailer_id,
+            amount: total,
+            method: payment_method,
+            gateway: payment_method === 'COD' ? 'cod' : 'razorpay',
+            status: payment_method === 'COD' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING
+        };
+
+        const payment_doc = await PaymentModel.create(payment_data);
+        
+        let razorpay_order = null;
+        if (payment_method !== 'COD') {
+            razorpay_order = await this.payment_service.create_razorpay_order(
+                total, 
+                'INR', 
+                created_order.order_number
+            );
+            
+            // Link razorpay order id to payment doc
+            await PaymentModel.findByIdAndUpdate(payment_doc._id, {
+                gateway_order_id: razorpay_order.razorpay_order_id
+            });
+        }
+
+        // 7. Clear the cart
         const { CartService } = require('./CartService'); // Lazy load to prevent circular deps
         const cart_service = new CartService();
         await cart_service.clear_cart(consumer_id);
 
         Logger.info(`Successfully created Order ${created_order.order_number} for consumer ${consumer_id}`, 'CheckoutService');
-        return created_order;
+        return { 
+            order: created_order,
+            razorpay_order,
+            payment_id: payment_doc._id
+        } as any;
     }
 }

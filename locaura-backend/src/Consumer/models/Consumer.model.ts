@@ -38,6 +38,8 @@ export interface IConsumer extends Document {
     addresses: IConsumerAddress[];
     cart: IConsumerCart;
     
+    fcm_token?: string;
+    
     status: 'active' | 'suspended' | 'deleted';
     
     createdAt: Date;
@@ -100,6 +102,8 @@ const ConsumerSchema = new Schema<IConsumer>(
 
         addresses: { type: [AddressSchema], default: () => [] },
         cart: { type: CartSchema, default: () => ({ items: [] }) },
+
+        fcm_token: { type: String },
 
         status: { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
     },

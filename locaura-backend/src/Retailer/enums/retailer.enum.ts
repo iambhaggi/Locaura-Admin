@@ -11,3 +11,24 @@ export enum RetailerStatus {
     PENDING = 'pending',
     SUSPENDED = 'suspended'
 }
+
+export enum RiderStatus {
+    ACTIVE = 'active',
+    INACTIVE = 'inactive',
+    PENDING = 'pending',
+    SUSPENDED = 'suspended',
+    REJECTED = 'rejected'
+}
+
+export enum RiderDocumentStatus {
+    PENDING = 'pending',
+    VERIFIED = 'verified',
+    REJECTED = 'rejected'
+}
+
+export enum PayoutStatus {
+    PENDING = 'pending',
+    PROCESSING = 'processing',
+    PAID = 'paid',
+    FAILED = 'failed'
+}

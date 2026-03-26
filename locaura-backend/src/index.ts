@@ -11,6 +11,13 @@ import product_routes from './Retailer/routes/product.routes';
 import consumer_auth_routes from './Consumer/routes/auth_routes';
 import consumer_cart_routes from './Consumer/routes/cart_routes';
 import consumer_checkout_routes from './Consumer/routes/checkout_routes';
+import consumer_store_routes from './Consumer/routes/store_routes';
+import consumer_category_routes from './Consumer/routes/category_routes';
+import consumer_order_routes from './Consumer/routes/order_routes';
+import consumer_payment_routes from './Consumer/routes/payment_routes';
+import retailer_order_routes from './Retailer/routes/order_routes';
+import rider_auth_routes from './Rider/routes/auth_routes';
+import rider_delivery_routes from './Rider/routes/delivery_routes';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -48,10 +55,18 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api/v1/auth', auth_routes); // Retailer auth
 app.use('/api/v1/stores', store_routes); // Retailer stores
 app.use('/api/v1/stores/:store_id/products', product_routes); // Retailer products
+app.use('/api/v1/retailers/orders', retailer_order_routes); // Retailer order management
 
 app.use('/api/v1/consumers/auth', consumer_auth_routes); // Consumer auth
 app.use('/api/v1/consumers/cart', consumer_cart_routes); // Consumer Cart
 app.use('/api/v1/consumers/checkout', consumer_checkout_routes); // Consumer Checkout
+app.use('/api/v1/consumers/stores', consumer_store_routes); // Consumer store discovery
+app.use('/api/v1/consumers/categories', consumer_category_routes); // Consumer categories
+app.use('/api/v1/consumers/orders', consumer_order_routes); // Consumer order history
+app.use('/api/v1/consumers/payments', consumer_payment_routes); // Consumer razorpay payments
+
+app.use('/api/v1/riders/auth', rider_auth_routes); // Rider auth
+app.use('/api/v1/riders/deliveries', rider_delivery_routes); // Rider delivery routes
 
 // Error handling - Add at the end of all routes
 app.use(error_handler);
