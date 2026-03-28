@@ -102,9 +102,8 @@ const OrderSchema = new Schema<IOrder>(
     order_number:        { type: String, unique: true, required: true },
     store_id:            { type: Schema.Types.ObjectId, ref: 'Store',    required: true, index: true },
     retailer_id:         { type: Schema.Types.ObjectId, ref: 'Retailer', required: true, index: true },
-    // Mapped ref to 'User' rather than 'Consumer' to match current system setup
-    consumer_id:         { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    delivery_partner_id: { type: Schema.Types.ObjectId, ref: 'DeliveryPartner', default: null },
+    consumer_id:         { type: Schema.Types.ObjectId, ref: 'Consumer', required: true, index: true },
+    delivery_partner_id: { type: Schema.Types.ObjectId, ref: 'Rider', default: null },
 
     items: { type: [OrderItemSchema], default: () => [], required: true },
 

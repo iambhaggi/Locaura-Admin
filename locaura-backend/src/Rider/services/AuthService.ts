@@ -7,11 +7,22 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_12345';
 export class AuthService {
     private rider_repository = new RiderRepository();
 
+    // Constant for App/Play Store review and internal testing bypass
+    private TEST_NUMBERS = [
+        '9999999999', // standard test number
+        '8888888888', // alternate test number
+        '7777777777'  // extra buffer test number
+    ];
+    private STATIC_TEST_OTP = '1234';
+
     async send_otp(phone: string, name?: string): Promise<{ success: boolean; message: string }> {
         let rider = await this.rider_repository.find_by_phone(phone);
 
-        // Generate 4-digit OTP
-        const otp = Math.floor(1000 + Math.random() * 9000).toString();
+        // Generate 4-digit OTP, unless it's a test number bypass
+        const is_test_number = this.TEST_NUMBERS.includes(phone);
+        const otp = is_test_number
+            ? this.STATIC_TEST_OTP
+            : Math.floor(1000 + Math.random() * 9000).toString();
         const otp_expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
 
         if (!rider) {
@@ -37,7 +48,7 @@ export class AuthService {
         return { success: true, message: 'OTP sent successfully' };
     }
 
-    async verify_otp(phone: string, otp: string): Promise<{ success: boolean; token?: string; message: string; rider?: any }> {
+    async verify_otp(phone: string, otp: string): Promise<{ success: boolean; message: string; data?: any }> {
         const rider = await this.rider_repository.find_by_phone(phone);
 
         if (!rider) {
@@ -70,11 +81,17 @@ export class AuthService {
             { expiresIn: '30d' }
         );
 
+        // 3. Log developer friendly message to console
+        const developer_msg = `Auth Successful: Rider ${updated_rider?.phone} (${updated_rider?._id}) logged in. Role: rider.`;
+        require('../../utils/logger').Logger.success(developer_msg, 'RiderAuth');
+
         return { 
             success: true, 
-            message: 'Login successful', 
-            token, 
-            rider: updated_rider 
+            message: `Welcome back, ${updated_rider?.name || 'Rider'}! You're ready to start delivering.`,
+            data: {
+                rider: updated_rider,
+                token: token
+            } 
         };
     }
 }

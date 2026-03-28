@@ -8,6 +8,16 @@ import PaymentModel from '../../Retailer/models/Payment.model';
 import { PaymentService } from './PaymentService';
 import { Logger } from '../../utils/logger';
 
+interface CheckoutResult {
+    order: IOrder;
+    payment_id: string;
+    razorpay_order?: {
+        razorpay_order_id: string;
+        amount: number | string;
+        currency: string;
+    };
+}
+
 export class CheckoutService {
     private order_repository = new OrderRepository();
     private store_repository = new StoreRepository();
@@ -15,26 +25,26 @@ export class CheckoutService {
     private consumer_repository = new ConsumerRepository();
     private payment_service = new PaymentService();
 
-    async process_checkout(consumer_id: string, checkout_payload: any): Promise<{ order: IOrder, razorpay_order?: any }> {
+    async process_checkout(consumer_id: string, checkout_payload: any): Promise<CheckoutResult> {
         const { delivery_address_id, payment_method, special_instructions } = checkout_payload;
 
         // 1. Verify consumer and get the specific address
         const consumer = await this.consumer_repository.find_by_id(consumer_id);
-        if (!consumer) throw new Error("Consumer not found");
+        if (!consumer) throw new Error('Consumer not found');
 
         if (!consumer.cart || !consumer.cart.items || consumer.cart.items.length === 0) {
-            throw new Error("Cart is empty");
+            throw new Error('Cart is empty');
         }
-        
+
         const store_id = consumer.cart.store_id?.toString();
-        if (!store_id) throw new Error("Store ID missing on cart");
+        if (!store_id) throw new Error('Store ID missing on cart');
 
         const delivery_address = consumer.addresses.find(a => a._id?.toString() === delivery_address_id);
-        if (!delivery_address) throw new Error("Delivery address not found for this consumer");
+        if (!delivery_address) throw new Error('Delivery address not found for this consumer');
 
         // 2. Verify Store
         const store = await this.store_repository.find_by_store_id(store_id);
-        if (!store) throw new Error("Store not found");
+        if (!store) throw new Error('Store not found');
 
         // 3. Validate Items and Calculate Totals
         const order_items: IOrderItem[] = [];
@@ -61,7 +71,7 @@ export class CheckoutService {
 
             // Fetch Parent Product for name
             const parent_product = await this.product_repository.get_product_by_id(variant.parent_id.toString());
-            const product_name = parent_product ? parent_product.name : "Unknown Product";
+            const product_name = parent_product ? parent_product.name : 'Unknown Product';
 
             const item_total = variant.price * requested_item.quantity;
             subtotal += item_total;
@@ -84,6 +94,9 @@ export class CheckoutService {
         const tax_rate = 0.18; // 18% generic tax
         const tax = parseFloat((subtotal * tax_rate).toFixed(2));
         const total = subtotal + delivery_fee + tax;
+
+        const is_cod = payment_method === 'COD';
+        const payment_status = is_cod ? PaymentStatus.COMPLETED : PaymentStatus.PENDING;
 
         // 5. Construct Document
         const order_data: Partial<IOrder> = {
@@ -111,7 +124,9 @@ export class CheckoutService {
             },
             payment: {
                 method: payment_method,
-                status: PaymentStatus.PENDING
+                status: payment_status,
+                paid_at: is_cod ? new Date() : undefined,
+                reference: is_cod ? 'COD' : undefined
             },
             status: OrderStatus.PENDING,
             status_history: [{
@@ -133,23 +148,25 @@ export class CheckoutService {
             retailer_id: created_order.retailer_id,
             amount: total,
             method: payment_method,
-            gateway: payment_method === 'COD' ? 'cod' : 'razorpay',
-            status: payment_method === 'COD' ? PaymentStatus.COMPLETED : PaymentStatus.PENDING
+            gateway: is_cod ? 'cod' : 'razorpay',
+            status: payment_status
         };
 
         const payment_doc = await PaymentModel.create(payment_data);
-        
-        let razorpay_order = null;
-        if (payment_method !== 'COD') {
-            razorpay_order = await this.payment_service.create_razorpay_order(
-                total, 
-                'INR', 
+
+        let razorpay_order: CheckoutResult['razorpay_order'] = undefined;
+        if (!is_cod) {
+            const created_razorpay_order = await this.payment_service.create_razorpay_order(
+                total,
+                'INR',
                 created_order.order_number
             );
-            
+
+            razorpay_order = created_razorpay_order;
+
             // Link razorpay order id to payment doc
             await PaymentModel.findByIdAndUpdate(payment_doc._id, {
-                gateway_order_id: razorpay_order.razorpay_order_id
+                gateway_order_id: created_razorpay_order.razorpay_order_id
             });
         }
 
@@ -159,10 +176,10 @@ export class CheckoutService {
         await cart_service.clear_cart(consumer_id);
 
         Logger.info(`Successfully created Order ${created_order.order_number} for consumer ${consumer_id}`, 'CheckoutService');
-        return { 
+        return {
             order: created_order,
-            razorpay_order,
-            payment_id: payment_doc._id
-        } as any;
+            payment_id: payment_doc._id.toString(),
+            razorpay_order
+        };
     }
 }

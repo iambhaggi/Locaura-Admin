@@ -41,6 +41,21 @@ export class DeliveryController {
         }
     };
 
+    pickup_order = async (req: Request, res: Response) => {
+        try {
+            const rider_id = req.user?.id;
+            const order_id = req.params.id as string;
+            
+            if (!rider_id) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+            const order = await this.delivery_service.pickup_order(rider_id, order_id);
+            res.status(200).json({ success: true, message: 'Order picked up successfully', data: { order } });
+        } catch (error: any) {
+            Logger.error(`Rider pickup order error: ${error.message}`, 'DeliveryController');
+            res.status(400).json({ success: false, message: error.message || 'Failed to pick up order' });
+        }
+    };
+
     mark_delivered = async (req: Request, res: Response) => {
         try {
             const rider_id = req.user?.id;

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PaymentService } from '../services/PaymentService';
 import { Logger } from '../../utils/logger';
+import crypto from 'crypto';
 
 export class PaymentController {
     private payment_service = new PaymentService();
@@ -8,9 +9,9 @@ export class PaymentController {
     create_order = async (req: Request, res: Response) => {
         try {
             const { amount, receipt, currency } = req.body;
-            
-            if (!amount || !receipt) {
-                return res.status(400).json({ success: false, message: 'Amount and receipt are required' });
+
+            if (!Number.isFinite(amount) || amount <= 0 || !receipt) {
+                return res.status(400).json({ success: false, message: 'Valid amount and receipt are required' });
             }
 
             const razorpay_order = await this.payment_service.create_razorpay_order(amount, currency || 'INR', receipt);
@@ -23,16 +24,25 @@ export class PaymentController {
 
     verify_payment = async (req: Request, res: Response) => {
         try {
-            const { 
-                payment_id, // Internal IPayment doc id
-                razorpay_order_id, 
-                razorpay_payment_id, 
-                razorpay_signature 
+            const consumer_id_raw = req.user?.id;
+            const {
+                payment_id,
+                razorpay_order_id,
+                razorpay_payment_id,
+                razorpay_signature
             } = req.body;
 
+            if (!consumer_id_raw || typeof consumer_id_raw !== 'string') {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+
+            if (!payment_id || !razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+                return res.status(400).json({ success: false, message: 'Missing required payment verification fields' });
+            }
+
             const is_valid = this.payment_service.verify_payment_signature(
-                razorpay_order_id, 
-                razorpay_payment_id, 
+                razorpay_order_id,
+                razorpay_payment_id,
                 razorpay_signature
             );
 
@@ -41,15 +51,49 @@ export class PaymentController {
             }
 
             const payment = await this.payment_service.capture_payment(
-                payment_id, 
-                razorpay_payment_id, 
+                payment_id,
+                consumer_id_raw,
+                razorpay_order_id,
+                razorpay_payment_id,
                 razorpay_signature
             );
 
             res.status(200).json({ success: true, message: 'Payment verified successfully', data: { payment } });
         } catch (error: any) {
             Logger.error(`Razorpay Verify error: ${error.message}`, 'PaymentController');
+
+            if (
+                error.message?.includes('not found') ||
+                error.message?.includes('mismatch') ||
+                error.message?.includes('Cannot capture') ||
+                error.message?.includes('different transaction') ||
+                error.message?.includes('not linked')
+            ) {
+                return res.status(400).json({ success: false, message: error.message });
+            }
+
             res.status(500).json({ success: false, message: 'Failed to verify payment' });
+        }
+    };
+
+    refund_payment = async (req: Request, res: Response) => {
+        try {
+            const consumer_id_raw = req.user?.id;
+            const payment_id_raw = req.params.payment_id;
+
+            if (!consumer_id_raw || typeof consumer_id_raw !== 'string') {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+
+            if (!payment_id_raw || typeof payment_id_raw !== 'string') {
+                return res.status(400).json({ success: false, message: 'Payment id is required' });
+            }
+
+            const payment = await this.payment_service.process_refund_for_consumer(payment_id_raw, consumer_id_raw);
+            return res.status(200).json({ success: true, message: 'Refund processed successfully', data: { payment } });
+        } catch (error: any) {
+            Logger.error(`Refund processing error: ${error.message}`, 'PaymentController');
+            return res.status(400).json({ success: false, message: error.message || 'Failed to process refund' });
         }
     };
 
@@ -58,28 +102,37 @@ export class PaymentController {
             const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
             if (!secret) return res.status(500).send('Webhook secret not configured');
 
-            const expectedSignature = req.headers['x-razorpay-signature'];
-            if (!expectedSignature) return res.status(400).send('Missing signature');
+            const provided_signature = req.headers['x-razorpay-signature'];
+            if (!provided_signature || Array.isArray(provided_signature)) {
+                return res.status(400).send('Missing signature');
+            }
 
-            const crypto = require('crypto');
-            const generatedSignature = crypto
+            const generated_signature = crypto
                 .createHmac('sha256', secret)
                 .update(JSON.stringify(req.body))
                 .digest('hex');
 
-            if (generatedSignature !== expectedSignature) {
+            if (generated_signature !== provided_signature) {
                 return res.status(400).send('Invalid signature');
             }
 
-            const event = req.body.event;
+            const event = req.body?.event;
+            if (!event) {
+                return res.status(400).send('Invalid webhook payload');
+            }
+
             Logger.info(`Received Razorpay webhook: ${event}`, 'PaymentWebhook');
 
-            // Handle specific events (e.g. payment.captured, payment.failed, refund.processed)
-            // Routing it to payment_service based on payload
+            try {
+                await this.payment_service.handle_webhook_event(event, req.body?.payload);
+            } catch (error: any) {
+                Logger.error(`Webhook event processing error: ${error.message}`, 'PaymentWebhook');
+            }
 
-            res.status(200).send('OK');
+            return res.status(200).send('OK');
         } catch (error: any) {
-            res.status(500).send('Webhook processing failed');
+            Logger.error(`Webhook processing failed: ${error.message}`, 'PaymentWebhook');
+            return res.status(500).send('Webhook processing failed');
         }
     };
 }

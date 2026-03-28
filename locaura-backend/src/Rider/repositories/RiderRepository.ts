@@ -18,22 +18,26 @@ export class RiderRepository {
         return await Rider.findByIdAndUpdate(id, updateData, { new: true });
     }
 
-    async set_online_status(rider_id: string, isOnline: boolean) {
+    async set_online_status(rider_id: string, is_online: boolean) {
         // If they go offline, they are also not available. If online, they are available.
         return Rider.findByIdAndUpdate(rider_id, { 
-            isOnline, 
-            isAvailable: isOnline,
-            lastActiveAt: new Date()
+            is_online, 
+            is_available: is_online,
+            last_active_at: new Date()
         }, { new: true });
     }
 
     async update_location(rider_id: string, lng: number, lat: number) {
         return Rider.findByIdAndUpdate(rider_id, {
-            currentLocation: {
+            current_location: {
                 type: 'Point',
                 coordinates: [lng, lat]
             },
-            lastActiveAt: new Date()
+            last_active_at: new Date()
         }, { new: true });
+    }
+
+    async update_fcm_token(rider_id: string, fcm_token: string) {
+        return Rider.findByIdAndUpdate(rider_id, { fcm_token }, { new: true });
     }
 }

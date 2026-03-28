@@ -95,8 +95,8 @@ const RiderSchema = new Schema<IRider>(
         kyc_status: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
 
         current_location: {
-            type: { type: String, enum: ['Point'], default: 'Point' },
-            coordinates: { type: [Number], required: false }
+            type: { type: String, enum: ['Point'] },
+            coordinates: { type: [Number] }
         },
         
         is_online: { type: Boolean, default: false },
