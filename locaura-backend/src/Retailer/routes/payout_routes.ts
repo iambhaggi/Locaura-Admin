@@ -1,11 +1,16 @@
-import { Router, Request, Response } from 'express';
+﻿import { Router, Request, Response } from 'express';
 import { PayoutController } from '../controllers/PayoutController';
 import { auth_middleware } from '../middlewares/auth_middleware';
 
 export const payout_routes = Router();
 const payout_controller = new PayoutController();
 
-// All payout routes require retailer authentication
+// Razorpay payout webhook (no auth)
+payout_routes.post('/webhook', async (req: Request, res: Response) => {
+    await payout_controller.webhook(req, res);
+});
+
+// All other payout routes require retailer authentication
 payout_routes.use(auth_middleware);
 
 /**

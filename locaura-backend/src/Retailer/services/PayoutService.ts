@@ -1,16 +1,11 @@
-import { PayoutRepository } from '../repositories/PayoutRepository';
+﻿import { PayoutRepository } from '../repositories/PayoutRepository';
 import { OrderRepository } from '../repositories/OrderRepository';
 import { StoreRepository } from '../repositories/StoreRepository';
-import { RetailerRepository } from '../repositories/RetailerRepository';
 import { IPayout } from '../models/Payout.model';
 import { PayoutStatus } from '../enums/retailer.enum';
 import { OrderStatus, PaymentStatus } from '../enums/order.enum';
-import Razorpay from 'razorpay';
-
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'fallbackKeyId',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'fallbackSecret'
-});
+import { get_razorpay_gateway } from '../../utils/RazorpayGatewayService';
+import mongoose from 'mongoose';
 
 const PLATFORM_FEE_PERCENTAGE = 18; // 18% platform fee
 const PAYOUT_HOLD_DAYS = 2; // Hold payouts for 2 days to allow refunds
@@ -19,7 +14,7 @@ export class RetailerPayoutService {
     private payout_repo = new PayoutRepository();
     private order_repo = new OrderRepository();
     private store_repo = new StoreRepository();
-    private retailer_repo = new RetailerRepository();
+    private razorpay_gateway = get_razorpay_gateway();
 
     /**
      * Calculate revenue for orders delivered between dates
@@ -31,7 +26,7 @@ export class RetailerPayoutService {
         to_date: Date
     ): Promise<{ total_revenue: number; total_orders: number; platform_fee: number; net_payout: number }> {
         const delivered_orders = await this.order_repo.find_by_store(store_id);
-        
+
         let total_revenue = 0;
         let total_orders = 0;
         let refunded_amount = 0;
@@ -47,11 +42,6 @@ export class RetailerPayoutService {
                     total_revenue += order.pricing.total;
                     total_orders += 1;
                 } else if (order.payment?.status === PaymentStatus.REFUNDED) {
-                    // It was delivered but later refunded (partially or fully).
-                    // In a simple model, we just count the full amount as refunded.
-                    // If we assume revenue was never collected if refunded, we could just ignore,
-                    // but depending on logic, maybe it was processed earlier and now refunded.
-                    // Adjust as needed:
                     total_orders += 1;
                     refunded_amount += order.pricing.total;
                 }
@@ -94,7 +84,7 @@ export class RetailerPayoutService {
 
         const payout_data: Partial<IPayout> = {
             retailer_id: store.retailer_id,
-            store_id: new Object(store_id) as any, // Cast string to ObjectId internally handled
+            store_id: new mongoose.Types.ObjectId(store_id),
             period: {
                 from: from_date,
                 to: today
@@ -110,8 +100,7 @@ export class RetailerPayoutService {
     }
 
     /**
-     * Process a pending payout via Razorpay
-     * Checks bank details exist and initiates payout
+     * Process a pending payout via RazorpayX
      */
     async process_payout(payout_id: string): Promise<IPayout> {
         const payout = await this.payout_repo.find_by_id(payout_id);
@@ -129,69 +118,81 @@ export class RetailerPayoutService {
             throw new Error(`Payout must be at least ${PAYOUT_HOLD_DAYS} days old before processing`);
         }
 
-        // Verify bank details exist
         const store = await this.store_repo.find_by_store_id(payout.store_id.toString());
-        if (!store?.bank_details || !store.bank_details.account_holder_name) {
-            throw new Error('Store bank details not configured');
+        if (!store?.bank_details || !store.bank_details.account_holder_name || !store.bank_details.account_number || !store.bank_details.ifsc_code) {
+            throw new Error('Store bank details are incomplete');
         }
 
         try {
-            // Call Razorpay payout API
-            const rp = razorpay as any;
-            const razorpay_payout = await rp.payouts.create({
-                account_number: store.bank_details.account_number!,
-                amount: Math.round(payout.net_payout * 100), // in paise
-                currency: 'INR',
-                mode: 'NEFT',
-                purpose: 'payout',
+            const razorpay_payout = await this.razorpay_gateway.create_bank_payout({
+                amount_in_paise: Math.round(payout.net_payout * 100),
                 reference_id: payout._id.toString(),
-                queue_if_low_balance: false // Fail if insufficient balance
-            } as any);
+                account_number: store.bank_details.account_number,
+                ifsc: store.bank_details.ifsc_code,
+                account_holder_name: store.bank_details.account_holder_name,
+                narration: `Retailer payout ${payout._id.toString()}`,
+                notes: {
+                    beneficiary_type: 'retailer',
+                    store_id: payout.store_id.toString(),
+                    retailer_id: payout.retailer_id.toString()
+                }
+            });
 
-            // Update payout with Razorpay reference
-            await this.payout_repo.update_with_reference(
-                payout_id,
-                razorpay_payout.id,
-                new Date()
-            );
+            await this.payout_repo.update(payout_id, {
+                payout_reference: razorpay_payout.id,
+                status: PayoutStatus.PROCESSING
+            });
 
-            // Change status to PROCESSING
-            return await this.payout_repo.update_status(
-                payout_id,
-                PayoutStatus.PROCESSING
-            ) as IPayout;
+            const updated = await this.payout_repo.find_by_id(payout_id);
+            if (!updated) {
+                throw new Error('Failed to reload updated payout');
+            }
+
+            return updated;
         } catch (error: any) {
-            // Log error and update status to FAILED
-            console.error(`Payout processing failed: ${error.message}`);
             await this.payout_repo.update_status(payout_id, PayoutStatus.FAILED);
-            throw error;
+            throw new Error(`Payout processing failed: ${error.message}`);
         }
     }
 
     /**
-     * Handle Razorpay payout.completed webhook event
+     * Handle Razorpay payout webhook event
      */
+    async handle_webhook_event(event: string, payload: any): Promise<void> {
+        const entity = payload?.payout?.entity;
+        if (!entity) {
+            return;
+        }
+
+        switch (event) {
+            case 'payout.processed':
+            case 'payout.completed':
+                await this.handle_payout_completed(entity);
+                return;
+            case 'payout.failed':
+            case 'payout.rejected':
+                await this.handle_payout_failed(entity);
+                return;
+            default:
+                return;
+        }
+    }
+
     async handle_payout_completed(entity: any): Promise<void> {
         const payout = await this.payout_repo.find_by_id(entity.reference_id);
         if (!payout) return;
 
-        await this.payout_repo.update_status(
-            entity.reference_id,
-            PayoutStatus.PAID
-        );
+        await this.payout_repo.update(payout._id.toString(), {
+            status: PayoutStatus.PAID,
+            paid_at: new Date()
+        });
     }
 
-    /**
-     * Handle Razorpay payout.failed webhook event
-     */
     async handle_payout_failed(entity: any): Promise<void> {
         const payout = await this.payout_repo.find_by_id(entity.reference_id);
         if (!payout) return;
 
-        await this.payout_repo.update_status(
-            entity.reference_id,
-            PayoutStatus.FAILED
-        );
+        await this.payout_repo.update_status(payout._id.toString(), PayoutStatus.FAILED);
     }
 
     /**

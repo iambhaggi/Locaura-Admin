@@ -1,11 +1,13 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import { RetailerPayoutService } from '../services/PayoutService';
 import { Logger } from '../../utils/logger';
-
+import { get_razorpay_gateway } from '../../utils/RazorpayGatewayService';
 
 const payout_service = new RetailerPayoutService();
 
 export class PayoutController {
+    private razorpay_gateway = get_razorpay_gateway();
+
     /**
      * List all payouts for the authenticated retailer
      */
@@ -142,6 +144,37 @@ export class PayoutController {
         } catch (error: any) {
             Logger.error('Failed to get payout details', error);
             res.status(500).json({ success: false, message: error.message });
+        }
+    }
+
+    /**
+     * Razorpay payout webhook callback
+     */
+    async webhook(req: Request, res: Response): Promise<void> {
+        try {
+            const provided_signature = req.headers['x-razorpay-signature'];
+            if (!provided_signature || Array.isArray(provided_signature)) {
+                res.status(400).send('Missing signature');
+                return;
+            }
+
+            const is_valid = this.razorpay_gateway.verify_webhook_signature(req.body, provided_signature, 'payouts');
+            if (!is_valid) {
+                res.status(400).send('Invalid signature');
+                return;
+            }
+
+            const event = req.body?.event;
+            if (!event) {
+                res.status(400).send('Invalid webhook payload');
+                return;
+            }
+
+            await payout_service.handle_webhook_event(event, req.body?.payload);
+            res.status(200).send('OK');
+        } catch (error: any) {
+            Logger.error(`Retailer payout webhook failed: ${error.message}`, 'RetailerPayoutWebhook');
+            res.status(500).send('Webhook processing failed');
         }
     }
 }

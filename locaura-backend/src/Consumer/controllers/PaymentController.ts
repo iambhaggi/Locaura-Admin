@@ -1,10 +1,11 @@
-import { Request, Response } from 'express';
+﻿import { Request, Response } from 'express';
 import { PaymentService } from '../services/PaymentService';
 import { Logger } from '../../utils/logger';
-import crypto from 'crypto';
+import { get_razorpay_gateway } from '../../utils/RazorpayGatewayService';
 
 export class PaymentController {
     private payment_service = new PaymentService();
+    private razorpay_gateway = get_razorpay_gateway();
 
     create_order = async (req: Request, res: Response) => {
         try {
@@ -99,20 +100,13 @@ export class PaymentController {
 
     webhook = async (req: Request, res: Response) => {
         try {
-            const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-            if (!secret) return res.status(500).send('Webhook secret not configured');
-
             const provided_signature = req.headers['x-razorpay-signature'];
             if (!provided_signature || Array.isArray(provided_signature)) {
                 return res.status(400).send('Missing signature');
             }
 
-            const generated_signature = crypto
-                .createHmac('sha256', secret)
-                .update(JSON.stringify(req.body))
-                .digest('hex');
-
-            if (generated_signature !== provided_signature) {
+            const is_valid = this.razorpay_gateway.verify_webhook_signature(req.body, provided_signature, 'payments');
+            if (!is_valid) {
                 return res.status(400).send('Invalid signature');
             }
 

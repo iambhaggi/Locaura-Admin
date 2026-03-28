@@ -1,28 +1,11 @@
-import Razorpay from 'razorpay';
-import crypto from 'crypto';
-import PaymentModel from '../../Retailer/models/Payment.model';
+﻿import PaymentModel from '../../Retailer/models/Payment.model';
 import { PaymentStatus } from '../../Retailer/enums/order.enum';
 import { OrderRepository } from '../../Retailer/repositories/OrderRepository';
-
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_test_fallbackKey123',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || 'fallbackSecretValue',
-});
+import { get_razorpay_gateway } from '../../utils/RazorpayGatewayService';
 
 export class PaymentService {
     private order_repository = new OrderRepository();
-
-    private get_signature_secret(): string {
-        return process.env.RAZORPAY_KEY_SECRET || 'fallbackSecretValue';
-    }
-
-    private create_signature(razorpay_order_id: string, razorpay_payment_id: string): string {
-        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-        return crypto
-            .createHmac('sha256', this.get_signature_secret())
-            .update(body)
-            .digest('hex');
-    }
+    private razorpay_gateway = get_razorpay_gateway();
 
     async create_razorpay_order(amount: number, currency: string = 'INR', receipt: string) {
         if (!Number.isFinite(amount) || amount <= 0) {
@@ -33,14 +16,13 @@ export class PaymentService {
             throw new Error('Receipt is required');
         }
 
-        const options = {
-            amount: Math.round(amount * 100),
-            currency,
-            receipt,
-        };
-
         try {
-            const order = await razorpay.orders.create(options);
+            const order = await this.razorpay_gateway.create_order({
+                amount,
+                currency,
+                receipt
+            });
+
             return {
                 razorpay_order_id: order.id,
                 amount: order.amount,
@@ -52,8 +34,11 @@ export class PaymentService {
     }
 
     verify_payment_signature(razorpay_order_id: string, razorpay_payment_id: string, signature: string): boolean {
-        const expected_signature = this.create_signature(razorpay_order_id, razorpay_payment_id);
-        return expected_signature === signature;
+        return this.razorpay_gateway.verify_payment_signature(
+            razorpay_order_id,
+            razorpay_payment_id,
+            signature
+        );
     }
 
     async capture_payment(
@@ -219,7 +204,9 @@ export class PaymentService {
         }
 
         try {
-            const refund = await razorpay.payments.refund(payment.gateway_payment_id as string, {});
+            const refund = await this.razorpay_gateway.create_refund({
+                payment_id: payment.gateway_payment_id as string
+            });
 
             payment.status = PaymentStatus.REFUNDED;
             payment.refund_id = refund.id;
