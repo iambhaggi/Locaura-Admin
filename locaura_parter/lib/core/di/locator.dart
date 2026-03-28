@@ -3,17 +3,17 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/api_client.dart';
-import '../../features/auth/data/datasources/auth_remote_datasource.dart';
-import '../../features/auth/data/repositories/auth_repository_impl.dart';
-import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/store/data/datasources/store_remote_datasource.dart';
-import '../../features/store/data/repositories/store_repository_impl.dart';
-import '../../features/store/domain/repositories/store_repository.dart';
-import '../../features/store/domain/usecases/store_usecases.dart';
-import '../../features/product/data/datasources/product_remote_datasource.dart';
-import '../../features/product/data/repositories/product_repository_impl.dart';
-import '../../features/product/domain/repositories/product_repository.dart';
-import '../../features/product/domain/usecases/product_usecases.dart';
+import '../../Retailer/features/auth/data/datasources/auth_remote_datasource.dart';
+import '../../Retailer/features/auth/data/repositories/auth_repository_impl.dart';
+import '../../Retailer/features/auth/domain/repositories/auth_repository.dart';
+import '../../Retailer/features/store/data/datasources/store_remote_datasource.dart';
+import '../../Retailer/features/store/data/repositories/store_repository_impl.dart';
+import '../../Retailer/features/store/domain/repositories/store_repository.dart';
+import '../../Retailer/features/store/domain/usecases/store_usecases.dart';
+import '../../Retailer/features/product/data/datasources/product_remote_datasource.dart';
+import '../../Retailer/features/product/data/repositories/product_repository_impl.dart';
+import '../../Retailer/features/product/domain/repositories/product_repository.dart';
+import '../../Retailer/features/product/domain/usecases/product_usecases.dart';
 
 final getIt = GetIt.instance;
 

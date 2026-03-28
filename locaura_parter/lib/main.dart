@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:locaura_parter/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:locaura_parter/Retailer/features/auth/presentation/controllers/auth_controller.dart';
 import 'core/di/locator.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
