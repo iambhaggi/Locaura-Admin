@@ -95,18 +95,20 @@ abstract class ApiService {
 
   // ─── DELETE ────────────────────────────────────────────────────────────────
 
-  Future<Either<Failure, bool>> deleteRequest({
+  Future<Either<Failure, T>> deleteRequest<T>({
     required String path,
+    FutureOr<T> Function(dynamic data)? fromJson,
     Map<String, dynamic>? queryParameters,
     Map<String, String>? headers,
   }) async {
     try {
-      await httpClient.delete(
+      final response = await httpClient.delete(
         path,
         queryParameters: queryParameters,
         options: _buildOptions(headers),
       );
-      return const Right(true);
+      if (fromJson == null) return Right(true as T);
+      return Right(await fromJson(response.data));
     } catch (e) {
       return Left(handleException(e));
     }

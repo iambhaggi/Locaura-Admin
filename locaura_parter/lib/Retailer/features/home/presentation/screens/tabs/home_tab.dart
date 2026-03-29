@@ -18,6 +18,14 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   StoreEntity? _selectedStore;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(storeControllerProvider.notifier).fetchMyStores();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,

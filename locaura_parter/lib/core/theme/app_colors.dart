@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 
 abstract class AppColors {
-  // Brand
+  // Brand (Retailer)
   static const primary = Color(0xFF2563EB);
   static const primaryLight = Color(0xFF3B82F6);
   static const primaryDark = Color(0xFF1D4ED8);
+
+  // Consumer Brand Palette
+  static const cream = Color(0xFFF5F0EB);
+  static const offWhite = Color(0xFFFAF9F7);
+  static const gold = Color(0xFFC9A84C);
+  static const goldLight = Color(0xFFE8C96A);
+  static const charcoal = Color(0xFF2D2D2D);
+  static const charcoalLight = Color(0xFF3D3D3D);
+  static const consumerAccent = Color(0xFF1A1A2E);
+  static const flashAmber = Color(0xFFFF6B00);
+  static const discountRed = Color(0xFFE53935);
 
   // Semantic
   static const success = Color(0xFF16A34A);

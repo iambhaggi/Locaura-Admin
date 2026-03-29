@@ -28,16 +28,20 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   void _onContinue() {
     context.unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    final actorType = _isRetailer ? 'retailer' : 'consumer';
     ref
         .read(authControllerProvider.notifier)
-        .sendOtp(_phoneController.text.trim());
+        .sendOtp(_phoneController.text.trim(),actorType);
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authControllerProvider, (_, state) {
       state.whenOrNull(
-        otpSent: (phone) => context.push(AppRoutes.otp, extra: phone),
+        otpSent: (phone, actorType) => context.push(
+          AppRoutes.otp,
+          extra: {'phone': phone, 'actorType': actorType},
+        ),
         error: (msg) => context.showSnackbar(msg, isError: true),
       );
     });

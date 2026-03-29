@@ -10,7 +10,8 @@ import '../widgets/otp_input_widget.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   final String phone;
-  const OtpScreen({super.key, required this.phone});
+  final String actorType;
+  const OtpScreen({super.key, required this.phone, this.actorType = 'consumer'});
 
   @override
   ConsumerState<OtpScreen> createState() => _OtpScreenState();
@@ -56,7 +57,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       context.showSnackbar('Please agree to the terms and conditions', isError: true);
       return;
     }
-    ref.read(authControllerProvider.notifier).verifyOtp(widget.phone, otp);
+    ref.read(authControllerProvider.notifier).verifyOtp(widget.phone, otp, widget.actorType);
   }
 
   @override
@@ -64,6 +65,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     ref.listen<AuthState>(authControllerProvider, (_, state) {
       state.whenOrNull(
         authenticated: (_) => context.go(AppRoutes.home),
+        consumerAuthenticated: (_) => context.go(AppRoutes.consumerHome),
         error: (msg) => context.showSnackbar(msg, isError: true),
       );
     });

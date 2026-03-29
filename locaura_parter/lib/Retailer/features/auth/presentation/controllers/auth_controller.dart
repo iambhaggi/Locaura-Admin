@@ -1,6 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../../core/di/locator.dart';
+import '../../../../../core/utils/app_constants.dart';
+import '../../../../../Consumer/features/auth/domain/entities/consumer.entity.dart';
+import '../../../../../Consumer/features/location/presentation/providers/location_provider.dart';
 import '../../domain/entities/retailer.entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/send_otp.usecase.dart';
@@ -12,8 +16,9 @@ part 'auth_controller.freezed.dart';
 class AuthState with _$AuthState {
   const factory AuthState.initial() = _Initial;
   const factory AuthState.loading() = _Loading;
-  const factory AuthState.otpSent(String phone) = _OtpSent;
+  const factory AuthState.otpSent(String phone, String actorType) = _OtpSent;
   const factory AuthState.authenticated(RetailerEntity consumer) = _Authenticated;
+  const factory AuthState.consumerAuthenticated(ConsumerEntity consumer) = _ConsumerAuthenticated;
   const factory AuthState.error(String message) = _Error;
 }
 
@@ -21,41 +26,106 @@ class AuthController extends StateNotifier<AuthState> {
   final SendOtpUseCase _sendOtp;
   final VerifyOtpUseCase _verifyOtp;
   final AuthRepository _repository;
+  final FlutterSecureStorage _storage;
+  final Ref _ref;
 
-  AuthController(this._sendOtp, this._verifyOtp, this._repository)
-      : super(const AuthState.initial());
+  AuthController(this._sendOtp, this._verifyOtp, this._repository, this._ref)
+      : _storage = const FlutterSecureStorage(),
+        super(const AuthState.initial());
 
   Future<void> loadPersistedProfile() async {
-    final profile = await _repository.getPersistedProfile();
-    if (profile != null) {
-      state = AuthState.authenticated(profile);
+    try {
+      final actorType = await _storage.read(key: AppConstants.actorTypeKey);
+      final token = await _storage.read(key: AppConstants.accessTokenKey);
+      
+      if (token == null) {
+        state = const AuthState.initial();
+        return;
+      }
+
+      state = const AuthState.loading();
+      if (actorType == AppConstants.actorConsumer) {
+        await refreshConsumerProfile();
+      } else {
+        await refreshProfile();
+      }
+    } catch (e) {
+      state = AuthState.error('Failed to load profile: $e');
     }
   }
 
-  Future<void> sendOtp(String phone) async {
-    state = const AuthState.loading();
-    final result = await _sendOtp(phone);
+  Future<void> refreshProfile() async {
+    final result = await _repository.getProfile();
     result.fold(
-      (failure) => state = AuthState.error(failure.message),
-      (_) => state = AuthState.otpSent(phone),
+      (failure) {
+        // If it's a 401, we should probably logout
+        if (failure.statusCode == 401) {
+          logout();
+        } else if (state is! _Authenticated) {
+          // Only set error if we don't have a local profile already
+          state = AuthState.error(failure.message);
+        }
+      },
+      (profile) => state = AuthState.authenticated(profile),
     );
   }
 
-  Future<void> verifyOtp(String phone, String otp) async {
+  Future<void> sendOtp(String phone, String actorType) async {
     state = const AuthState.loading();
-    final result = await _verifyOtp(phone, otp);
+    final result = await _sendOtp(phone,actorType);
     result.fold(
       (failure) => state = AuthState.error(failure.message),
-      (consumer) => state = AuthState.authenticated(consumer),
+      (_) => state = AuthState.otpSent(phone, actorType),
+    );
+  }
+
+  Future<void> verifyOtp(String phone, String otp, String actorType) async {
+    state = const AuthState.loading();
+    final result = await _verifyOtp(phone, otp,actorType);
+    await result.fold(
+      (failure) async => state = AuthState.error(failure.message),
+      (entity) async {
+        await _storage.write(key: AppConstants.actorTypeKey, value: actorType);
+        
+        if (actorType == AppConstants.actorConsumer) {
+          final consumer = entity as ConsumerEntity;
+          await _storage.write(key: AppConstants.accessTokenKey, value: consumer.token);
+          // ConsumerEntity is already saved to storage in the repository layer
+          state = AuthState.consumerAuthenticated(consumer);
+          // Sync with location provider
+          _ref.read(locationProvider.notifier).setAddresses(consumer.addresses);
+        } else {
+          final retailer = entity as RetailerEntity;
+          await _storage.write(key: AppConstants.accessTokenKey, value: retailer.token);
+          state = AuthState.authenticated(retailer);
+        }
+      },
     );
   }
 
   Future<void> logout() async {
+    await _storage.delete(key: AppConstants.actorTypeKey);
     await _repository.logout();
     state = const AuthState.initial();
   }
 
   void reset() => state = const AuthState.initial();
+
+  Future<void> refreshConsumerProfile() async {
+    final result = await _repository.getConsumerProfile();
+    result.fold(
+      (failure) {
+        if (failure.statusCode == 401) {
+          logout();
+        }
+      },
+      (profile) {
+        state = AuthState.consumerAuthenticated(profile);
+        // Sync with location provider
+        _ref.read(locationProvider.notifier).setAddresses(profile.addresses);
+      },
+    );
+  }
 
   Future<void> updateProfile({
     String? retailerName,
@@ -75,10 +145,114 @@ class AuthController extends StateNotifier<AuthState> {
     result.fold(
       (failure) {
         state = AuthState.error(failure.message);
-        // Revert to authenticated with old data if error, but wait some time or show error
         state = AuthState.authenticated(currentState.consumer);
       },
       (retailer) => state = AuthState.authenticated(retailer),
+    );
+  }
+
+  Future<void> updateConsumerProfile({
+    String? name,
+    String? email,
+  }) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.updateConsumerProfile(
+      name: name,
+      email: email,
+    );
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
+        // Sync with location provider
+        _ref.read(locationProvider.notifier).setAddresses(consumer.addresses);
+      },
+    );
+  }
+
+  Future<void> addConsumerAddress(AddressEntity address) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.addConsumerAddress(address);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (addresses) {
+        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
+        state = AuthState.consumerAuthenticated(updatedConsumer);
+        // Also update the location provider
+        _ref.read(locationProvider.notifier).setAddresses(addresses);
+      },
+    );
+  }
+
+  Future<void> updateConsumerAddress(String addressId, AddressEntity address) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.updateConsumerAddress(addressId, address);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (addresses) {
+        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
+        state = AuthState.consumerAuthenticated(updatedConsumer);
+        // Also update the location provider
+        _ref.read(locationProvider.notifier).setAddresses(addresses);
+      },
+    );
+  }
+
+  Future<void> setDefaultAddress(String addressId) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    final result = await _repository.setDefaultAddress(addressId);
+    result.fold(
+      (failure) => state = AuthState.error(failure.message),
+      (addresses) {
+        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
+        state = AuthState.consumerAuthenticated(updatedConsumer);
+        // Sync with location provider
+        _ref.read(locationProvider.notifier).setAddresses(addresses);
+      },
+    );
+  }
+
+  Future<void> deleteConsumerAddress(String addressId) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.deleteConsumerAddress(addressId);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (addresses) {
+        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
+        state = AuthState.consumerAuthenticated(updatedConsumer);
+        // Sync with location provider
+        _ref.read(locationProvider.notifier).setAddresses(addresses);
+      },
     );
   }
 }
@@ -89,5 +263,6 @@ final authControllerProvider =
     SendOtpUseCase(getIt()),
     VerifyOtpUseCase(getIt()),
     getIt<AuthRepository>(),
+    ref,
   );
 });

@@ -16,6 +16,19 @@ import '../../Retailer/features/store/presentation/screens/store_form_screen.dar
 import '../../Retailer/features/product/presentation/screens/product_list_screen.dart';
 import '../../Retailer/features/product/presentation/screens/product_form_screen.dart';
 import '../../Retailer/features/auth/presentation/screens/edit_profile_screen.dart';
+import '../../Consumer/features/shell/consumer_shell_screen.dart';
+import '../../Consumer/features/home/presentation/screens/consumer_home_screen.dart';
+import '../../Consumer/features/browse/presentation/screens/browse_screen.dart';
+import '../../Consumer/features/product/presentation/screens/consumer_product_detail_screen.dart';
+import '../../Consumer/features/cart/presentation/screens/cart_screen.dart';
+import '../../Consumer/features/checkout/presentation/screens/checkout_screen.dart';
+import '../../Consumer/features/checkout/presentation/screens/order_confirmation_screen.dart';
+import '../../Consumer/features/browse/presentation/screens/consumer_store_products_screen.dart';
+import '../../Consumer/features/location/presentation/screens/location_screen.dart';
+import '../../Consumer/features/profile/presentation/screens/consumer_profile_screen.dart';
+import '../../Consumer/features/profile/presentation/screens/edit_consumer_profile_screen.dart';
+
+import '../../../../Consumer/features/location/presentation/providers/location_provider.dart';
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -25,6 +38,14 @@ class RouterNotifier extends ChangeNotifier {
       authControllerProvider,
       (previous, next) {
         if (previous != next) {
+          notifyListeners();
+        }
+      },
+    );
+    _ref.listen<LocationState>(
+      locationProvider,
+      (previous, next) {
+        if (previous?.selectedAddress != next.selectedAddress) {
           notifyListeners();
         }
       },
@@ -45,12 +66,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) async {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: AppConstants.accessTokenKey);
+      final actorType = await storage.read(key: AppConstants.actorTypeKey);
       final isAuthenticated = token != null;
       final isOnAuth = state.matchedLocation == AppRoutes.phone ||
           state.matchedLocation == AppRoutes.otp;
 
       if (!isAuthenticated && !isOnAuth) return AppRoutes.phone;
-      if (isAuthenticated && isOnAuth) return AppRoutes.home;
+      
+      if (isAuthenticated) {
+        if (isOnAuth) {
+          if (actorType == AppConstants.actorConsumer) return AppRoutes.consumerHome;
+          return AppRoutes.home;
+        }
+        
+        // If authenticated but on the wrong entry point, fix it
+        if (actorType == AppConstants.actorConsumer && state.matchedLocation == AppRoutes.home) {
+          return AppRoutes.consumerHome;
+        }
+        if (actorType == AppConstants.actorRetailer && state.matchedLocation == AppRoutes.consumerHome) {
+          return AppRoutes.home;
+        }
+
+        // Consumer location enforcement
+        if (actorType == AppConstants.actorConsumer) {
+          final locationState = ref.read(locationProvider);
+          final isLocationSet = locationState.selectedAddress != null;
+          final isOnLocation = state.matchedLocation == AppRoutes.location;
+
+          // if (!isLocationSet && !isOnLocation && !isOnAuth) {
+          //   return AppRoutes.location;
+          // }
+        }
+      }
+      
       return null;
     },
     routes: [
@@ -63,20 +111,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.otp,
         name: 'otp',
         builder: (context, state) {
-          final phone = state.extra as String;
-          return OtpScreen(phone: phone);
+          final extra = state.extra as Map<String, dynamic>;
+          return OtpScreen(
+            phone: extra['phone'] as String,
+            actorType: extra['actorType'] as String? ?? AppConstants.actorConsumer,
+          );
         },
       ),
       GoRoute(
         path: AppRoutes.registerStore,
         name: 'registerStore',
-        builder: (_, __) => const StoreFormScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.editStore,
-        name: 'editStore',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
+          final id = state.extra as String?;
           return StoreFormScreen(storeId: id);
         },
       ),
@@ -160,13 +206,99 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      // ── Consumer Shell ──
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return ConsumerShellScreen(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.consumerHome,
+                name: 'consumerHome',
+                builder: (_, __) => const ConsumerHomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.browse,
+                name: 'browse',
+                builder: (_, __) => const BrowseScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.consumerStoreProducts,
+                name: 'consumerStoreProducts',
+                builder: (context, state) {
+                  final storeId = state.pathParameters['storeId']!;
+                  return ConsumerStoreProductsScreen(storeId: storeId);
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.consumerCart,
+                name: 'consumerCart',
+                builder: (_, __) => const CartScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.consumerProfile,
+                name: 'consumerProfile',
+                builder: (_, __) => const ConsumerProfileScreen(),
+              ),
+              GoRoute(
+                path: AppRoutes.consumerEditProfile,
+                name: 'consumerEditProfile',
+                builder: (_, __) => const EditConsumerProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: AppRoutes.consumerProductDetail,
+        name: 'consumerProductDetail',
+        builder: (context, state) {
+          final productId = state.pathParameters['id']!;
+          return ConsumerProductDetailScreen(productId: productId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.checkout,
+        name: 'checkout',
+        builder: (_, __) => const CheckoutScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.orderConfirmation,
+        name: 'orderConfirmation',
+        builder: (context, state) {
+          final orderId = state.extra as String? ?? '';
+          return OrderConfirmationScreen(orderId: orderId);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.location,
+        name: 'location',
+        builder: (_, __) => const LocationScreen(),
+      ),
     ],
   );
 });
 
 abstract class AppRoutes {
+  // Shared auth
   static const phone = '/auth/phone';
   static const otp = '/auth/otp';
+
+  // Retailer
   static const home = '/home';
   static const orders = '/orders';
   static const inventory = '/inventory';
@@ -176,4 +308,16 @@ abstract class AppRoutes {
   static const productList = '/store/:storeId/products';
   static const productForm = '/store/:storeId/product-form';
   static const editProfile = '/profile/edit';
+
+  // Consumer
+  static const consumerHome = '/consumer/home';
+  static const browse = '/consumer/browse';
+  static const consumerStoreProducts = '/consumer/store/:storeId/products';
+  static const consumerCart = '/consumer/cart';
+  static const consumerProfile = '/consumer/profile';
+  static const consumerProductDetail = '/consumer/product/:id';
+  static const checkout = '/consumer/checkout';
+  static const orderConfirmation = '/consumer/order-confirmation';
+  static const location = '/consumer/location';
+  static const consumerEditProfile = '/consumer/profile/edit';
 }

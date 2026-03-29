@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locaura_parter/core/theme/app_colors.dart';
 import 'package:locaura_parter/Retailer/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:locaura_parter/Retailer/features/auth/domain/entities/retailer.entity.dart';
 import 'package:locaura_parter/core/router/app_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -21,6 +22,8 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
   void initState() {
     super.initState();
     _loadAppInfo();
+    // Refresh profile on entry
+    Future.microtask(() => ref.read(authControllerProvider.notifier).refreshProfile());
   }
 
   Future<void> _loadAppInfo() async {
@@ -50,8 +53,11 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         ),
       ),
       body: authState.maybeWhen(
-        authenticated: (retailer) => SingleChildScrollView(
-          child: Column(
+        authenticated: (retailer) => RefreshIndicator(
+          onRefresh: () => ref.read(authControllerProvider.notifier).refreshProfile(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
             children: [
               SizedBox(height: 24.h),
               _buildHeader(retailer.retailerName ?? 'Retailer Name', retailer.id,retailer.phoneVerified),
@@ -72,7 +78,13 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
               _buildMenuItem(
                 icon: Icons.storefront_outlined,
                 title: 'Store Settings',
-                onTap: () {},
+                onTap: () {
+                  if (retailer.stores.isEmpty) {
+                    context.push(AppRoutes.registerStore);
+                  } else {
+                    _showStoreSelectionSheet(context, retailer.stores);
+                  }
+                },
               ),
               SizedBox(height: 24.h),
               Padding(
@@ -109,10 +121,28 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
             ],
           ),
         ),
-        orElse: () => const Center(child: CircularProgressIndicator()),
       ),
-    );
-  }
+      error: (message) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(color: AppColors.error),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+              child: const Text('Logout'),
+            ),
+          ],
+        ),
+      ),
+      orElse: () => const Center(child: CircularProgressIndicator()),
+    ),
+  );
+}
 
   Widget _buildHeader(String name, String id, bool is_verified) {
     return Column(
@@ -292,6 +322,87 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                 color: AppColors.grey300,
               ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showStoreSelectionSheet(BuildContext context, List<StoreSummaryEntity> stores) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(24.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select Store to Edit',
+                style: TextStyle(
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.black,
+                ),
+              ),
+              SizedBox(height: 8.h),
+              Text(
+                'Choose which store you want to manage today.',
+                style: TextStyle(fontSize: 12.sp, color: AppColors.grey500),
+              ),
+              SizedBox(height: 24.h),
+              ...stores.map((store) => Padding(
+                padding: EdgeInsets.only(bottom: 12.h),
+                child: ListTile(
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push(AppRoutes.registerStore, extra: store.id);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.r),
+                    side: BorderSide(color: Colors.grey.shade100),
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    child: Icon(Icons.storefront, color: AppColors.primary, size: 20.sp),
+                  ),
+                  title: Text(
+                    store.name,
+                    style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    'Status: ${store.status}',
+                    style: TextStyle(
+                      fontSize: 11.sp,
+                      color: store.status == 'approved' ? Colors.green : Colors.orange,
+                    ),
+                  ),
+                  trailing: Icon(Icons.chevron_right, size: 20.sp, color: AppColors.grey400),
+                ),
+              )).toList(),
+              SizedBox(height: 8.h),
+              ListTile(
+                onTap: () {
+                  Navigator.pop(context);
+                  context.push(AppRoutes.registerStore);
+                },
+                leading: CircleAvatar(
+                  backgroundColor: Colors.grey.shade50,
+                  child: Icon(Icons.add, color: AppColors.grey600, size: 20.sp),
+                ),
+                title: Text(
+                  'Add Another Store',
+                  style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.normal),
+                ),
+              ),
+              SizedBox(height: 24.h),
+            ],
+          ),
         ),
       ),
     );

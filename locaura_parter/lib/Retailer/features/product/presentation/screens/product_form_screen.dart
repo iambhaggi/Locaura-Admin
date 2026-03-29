@@ -455,7 +455,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedCategory,
+          initialValue: _selectedCategory,
           items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 14)))).toList(),
           onChanged: (v) => setState(() => _selectedCategory = v),
           decoration: InputDecoration(
@@ -679,7 +679,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           Switch(
             value: _trackInventory,
             onChanged: (val) => setState(() => _trackInventory = val),
-            activeColor: const Color(0xFF1976D2),
+            activeThumbColor: const Color(0xFF1976D2),
           ),
         ],
       ),

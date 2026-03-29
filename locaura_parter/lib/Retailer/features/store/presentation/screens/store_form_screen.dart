@@ -705,7 +705,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
                   SwitchListTile(
                     value: _isDeliveryAvailable,
                     onChanged: (v) => setState(() => _isDeliveryAvailable = v),
-                    activeColor: const Color(0xFFFA641E),
+                    activeThumbColor: const Color(0xFFFA641E),
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       _isDeliveryAvailable ? 'Active' : 'Disabled',
@@ -798,7 +798,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
                         _businessHours[idx] = hour.copyWith(isClosed: !v);
                       });
                     },
-                    activeColor: const Color(0xFFFA641E),
+                    activeThumbColor: const Color(0xFFFA641E),
                   ),
                 ),
               ],
@@ -1037,7 +1037,7 @@ class _StoreFormScreenState extends ConsumerState<StoreFormScreen> {
 
   Widget _buildDropdown() {
     return DropdownButtonFormField<String>(
-      value: _businessType,
+      initialValue: _businessType,
       decoration: InputDecoration(
         contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         enabledBorder: OutlineInputBorder(

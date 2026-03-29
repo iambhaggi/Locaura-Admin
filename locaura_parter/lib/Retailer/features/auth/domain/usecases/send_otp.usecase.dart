@@ -5,5 +5,5 @@ class SendOtpUseCase {
   final AuthRepository _repository;
   SendOtpUseCase(this._repository);
 
-  ApiResult<void> call(String phone) => _repository.sendOtp(phone);
+  ApiResult<void> call(String phone, String actorType) => _repository.sendOtp(phone,actorType);
 }

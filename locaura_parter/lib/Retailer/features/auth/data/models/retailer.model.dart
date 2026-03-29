@@ -16,7 +16,7 @@ extension VerifyOtpResponseModelX on VerifyOtpResponseModel {
         email: retailer.email,
         retailerName: retailer.retailerName,
         panCard: retailer.panCard,
-        token: token,
+        token: token ?? '', // Can be empty if we just want to update profile data
         stores: stores
             .map((s) => StoreSummaryEntity(
                   id: s.id ?? '',
@@ -29,7 +29,7 @@ extension VerifyOtpResponseModelX on VerifyOtpResponseModel {
 @freezed
 class VerifyOtpResponseModel with _$VerifyOtpResponseModel {
   const factory VerifyOtpResponseModel({
-    required String token,
+    String? token, // Made optional for profile refresh
     required RetailerModel retailer,
     required List<StoreSummaryModel> stores,
   }) = _VerifyOtpResponseModel;
@@ -83,11 +83,19 @@ extension RetailerModelX on RetailerModel {
 @freezed
 class StoreSummaryModel with _$StoreSummaryModel {
   const factory StoreSummaryModel({
-    @JsonKey(name: '_id', defaultValue: '') String? id,
+    @JsonKey(name: 'id', defaultValue: '') String? id,
     String? name,
     String? status,
   }) = _StoreSummaryModel;
 
   factory StoreSummaryModel.fromJson(Map<String, dynamic> json) =>
       _$StoreSummaryModelFromJson(json);
+}
+
+extension StoreSummaryModelX on StoreSummaryModel {
+  StoreSummaryEntity toEntity() => StoreSummaryEntity(
+        id: id ?? '',
+        name: name ?? '',
+        status: status ?? 'unknown',
+      );
 }
