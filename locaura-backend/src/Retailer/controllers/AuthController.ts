@@ -41,7 +41,7 @@ export class AuthController {
             token: result.token,
             retailer: result.retailer,
             stores: result.stores.map(store => ({
-                id: store._id,
+                id: store._id.toString(),
                 name: store.store_name,
                 status: store.status
             }))
@@ -82,5 +82,35 @@ export class AuthController {
         return res
             .status(200)
             .json(new ApiResponse(200, { retailer: result.retailer }, "Profile details updated successfully"));
+    });
+
+    get_profile = asyncHandler(async (req: Request, res: Response) => {
+        const retailer_id = req.user?.id;
+        const auth_header = req.headers.authorization;
+        const token = auth_header?.split(' ')[1];
+
+        if (!retailer_id) {
+            throw new ApiError(401, "Unauthorized");
+        }
+
+        const result = await this.auth_service.get_profile(retailer_id);
+
+        if (!result) {
+            throw new ApiError(404, "Retailer not found");
+        }
+
+        const data = {
+            token: token,
+            retailer: result.retailer,
+            stores: result.stores.map(store => ({
+                id: store._id.toString(),
+                name: store.store_name,
+                status: store.status
+            }))
+        };
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, data, "Profile fetched successfully"));
     });
 }

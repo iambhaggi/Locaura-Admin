@@ -32,12 +32,7 @@ export class AuthController {
 
         const data = {
             token: result.token,
-            consumer: {
-                id: result.consumer._id,
-                phone: result.consumer.phone,
-                name: result.consumer.consumer_name,
-                email: result.consumer.email
-            }
+            consumer: result.consumer
         };
 
         return res
@@ -136,7 +131,20 @@ export class AuthController {
 
         return res
             .status(201)
-            .json(new ApiResponse(201, { addresses: result.addresses }, 'Address added successfully'));
+            .json(new ApiResponse(201, { consumer: result }, 'Address added successfully'));
+    });
+
+    update_address = asyncHandler(async (req: Request, res: Response) => {
+        const consumer_id = req.user?.id;
+        const address_id = req.params.address_id as string;
+        if (!consumer_id) throw new ApiError(401, 'Unauthorized');
+
+        const result = await this.auth_service.update_address(consumer_id, address_id, req.body);
+        if (!result) throw new ApiError(404, 'Consumer not found');
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { consumer: result }, 'Address updated successfully'));
     });
 
     get_addresses = asyncHandler(async (req: Request, res: Response) => {
@@ -159,7 +167,7 @@ export class AuthController {
 
         return res
             .status(200)
-            .json(new ApiResponse(200, { addresses: result.addresses }, 'Default address updated successfully'));
+            .json(new ApiResponse(200, { consumer: result }, 'Default address updated successfully'));
     });
 
     delete_address = asyncHandler(async (req: Request, res: Response) => {
@@ -172,6 +180,6 @@ export class AuthController {
 
         return res
             .status(200)
-            .json(new ApiResponse(200, { addresses: result.addresses }, 'Address deleted successfully'));
+            .json(new ApiResponse(200, { consumer: result }, 'Address deleted successfully'));
     });
 }

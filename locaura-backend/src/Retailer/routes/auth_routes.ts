@@ -11,7 +11,8 @@ const auth_controller = new AuthController();
 auth_router.post('/send-otp', validate_schema(send_otp_schema), auth_controller.send_otp);
 auth_router.post('/verify-otp', validate_schema(verify_otp_schema), auth_controller.verify_otp);
 
-// Profile Completion (Step 2 - after login/verification)
-auth_router.post('/complete-profile',auth_middleware, validate_schema(complete_profile_schema), auth_controller.complete_profile);
+// Profile Management
+auth_router.get('/profile', auth_middleware, auth_controller.get_profile);
+auth_router.post('/complete-profile', auth_middleware, validate_schema(complete_profile_schema), auth_controller.complete_profile);
 
 export default auth_router;

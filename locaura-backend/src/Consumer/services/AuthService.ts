@@ -109,21 +109,34 @@ export class AuthService {
     // ─────────────────────────────────────────────────────────────────────────────
 
     async add_address(consumer_id: string, address_data: any): Promise<IConsumer | null> {
-        // If it's the first address or marked as default, handle defaults
         const consumer = await this.consumer_repository.find_by_id(consumer_id);
         if (!consumer) return null;
 
         const is_first = consumer.addresses.length === 0;
+        
+        // If it's the first address or explicitly marked as default
         if (is_first || address_data.is_default) {
             address_data.is_default = true;
+            
+            // If not the first address, we need to clear current default
             if (!is_first) {
-                // Clear existing defaults
-                consumer.addresses.forEach(a => a.is_default = false);
-                await this.consumer_repository.update(consumer_id, { addresses: consumer.addresses });
+                // Clear is_default for all existing addresses efficiently
+                await this.consumer_repository.update_all_addresses(consumer_id, { is_default: false });
             }
+        } else {
+            // Ensure any new address added when we already have addresses is NOT default unless specified
+            address_data.is_default = false;
         }
 
         return this.consumer_repository.add_address(consumer_id, address_data);
+    }
+
+    async update_address(consumer_id: string, address_id: string, address_data: any): Promise<IConsumer | null> {
+        if (address_data.is_default) {
+            // Clear other defaults first
+            await this.consumer_repository.update_all_addresses(consumer_id, { is_default: false });
+        }
+        return this.consumer_repository.update_address(consumer_id, address_id, address_data);
     }
 
     async get_addresses(consumer_id: string) {
@@ -132,22 +145,15 @@ export class AuthService {
     }
 
     async set_default_address(consumer_id: string, address_id: string): Promise<IConsumer | null> {
-        const consumer = await this.consumer_repository.find_by_id(consumer_id);
-        if (!consumer) return null;
+        // Step 1: Clear all existing defaults
+        await this.consumer_repository.update_all_addresses(consumer_id, { is_default: false });
 
-        let found = false;
-        consumer.addresses.forEach(a => {
-            if (a._id?.toString() === address_id) {
-                a.is_default = true;
-                found = true;
-            } else {
-                a.is_default = false;
-            }
-        });
+        // Step 2: Set the specific address as default
+        const result = await this.consumer_repository.set_address_default(consumer_id, address_id);
 
-        if (!found) throw new Error("Address not found");
+        if (!result) throw new Error("Address not found");
 
-        return this.consumer_repository.update(consumer_id, { addresses: consumer.addresses });
+        return result;
     }
 
     async delete_address(consumer_id: string, address_id: string): Promise<IConsumer | null> {

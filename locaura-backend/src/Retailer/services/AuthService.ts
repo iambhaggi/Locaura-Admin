@@ -89,7 +89,6 @@ export class AuthService {
     // Step 3: Complete Registration Profile 
     // This updates their retailer details
     async complete_profile(retailer_id: any, retailer_data: Partial<IRetailer>): Promise<{ retailer: IRetailer } | null> {
-
         // 1. Update the Retailer (adding email, retailer_name, pan_card, etc)
         const updated_retailer = await this.retailer_repository.update(retailer_id, retailer_data);
         if (!updated_retailer) return null;
@@ -97,5 +96,13 @@ export class AuthService {
         return {
             retailer: updated_retailer
         };
+    }
+
+    async get_profile(retailer_id: any): Promise<{ retailer: IRetailer, stores: IStore[] } | null> {
+        const retailer = await this.retailer_repository.find_by_id(retailer_id);
+        if (!retailer) return null;
+
+        const stores = await this.store_repository.find_by_retailer_id(retailer_id);
+        return { retailer, stores };
     }
 }

@@ -28,6 +28,31 @@ export class ConsumerRepository {
         ).exec();
     }
 
+    async update_all_addresses(id: string, updateData: any): Promise<IConsumer | null> {
+        // Use positional operator to update all elements in subdocuments
+        return Consumer.findByIdAndUpdate(
+            id,
+            { $set: { "addresses.$[].is_default": updateData.is_default } },
+            { new: true }
+        ).exec();
+    }
+
+    async set_address_default(consumer_id: string, address_id: string): Promise<IConsumer | null> {
+        return Consumer.findOneAndUpdate(
+            { _id: consumer_id, "addresses._id": address_id },
+            { $set: { "addresses.$.is_default": true } },
+            { new: true }
+        ).exec();
+    }
+
+    async update_address(consumer_id: string, address_id: string, updateData: any): Promise<IConsumer | null> {
+        return Consumer.findOneAndUpdate(
+            { _id: consumer_id, "addresses._id": address_id },
+            { $set: { "addresses.$": { ...updateData, _id: address_id } } },
+            { new: true }
+        ).exec();
+    }
+
     async delete(id: string): Promise<IConsumer | null> {
         return Consumer.findByIdAndUpdate(id, { status: 'deleted' }, { new: true }).exec();
     }

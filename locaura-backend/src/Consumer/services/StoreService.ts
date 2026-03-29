@@ -57,4 +57,22 @@ export class StoreService {
         // Return Parent products. The client can fetch Child variants later or we populate them.
         return await ProductModel.find(query).sort({ is_featured: -1, createdAt: -1 });
     }
+
+    async get_product_details(product_id: string) {
+        const product = await ProductModel.findById(product_id);
+        if (!product || product.status !== 'active') {
+            throw new Error("Product not found or unavailable");
+        }
+
+        // Fetch all active child variants for this parent
+        const variants = await mongoose.model('ChildProduct').find({
+            parent_id: product._id,
+            is_active: true
+        });
+
+        return {
+            ...product.toObject(),
+            variants
+        };
+    }
 }

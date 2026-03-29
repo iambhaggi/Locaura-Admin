@@ -9,7 +9,7 @@ const store_controller = new StoreController();
 
 // PROTECTED ROUTES (Require Authentication)
 router.use(auth_middleware);
-// /api/v1/store
+// /api/v1/stores
 // Create a new store
 router.post(
     '/register',

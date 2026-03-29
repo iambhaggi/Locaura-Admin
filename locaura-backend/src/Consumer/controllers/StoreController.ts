@@ -49,4 +49,14 @@ export class StoreController {
             res.status(500).json({ success: false, message: 'Failed to fetch store products' });
         }
     };
+
+    get_product_details = async (req: Request, res: Response) => {
+        try {
+            const product_id = req.params.id as string;
+            const product = await this.store_service.get_product_details(product_id);
+            res.status(200).json({ success: true, data: { product } });
+        } catch (error: any) {
+            res.status(404).json({ success: false, message: error.message || 'Product not found' });
+        }
+    };
 }
