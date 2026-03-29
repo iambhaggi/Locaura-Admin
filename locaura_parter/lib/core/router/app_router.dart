@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:locaura_parter/Retailer/features/auth/domain/entities/retailer.entity.dart';
 import '../../Retailer/features/auth/presentation/controllers/auth_controller.dart';
 import '../utils/app_constants.dart';
@@ -28,7 +28,7 @@ import '../../Consumer/features/location/presentation/screens/location_screen.da
 import '../../Consumer/features/profile/presentation/screens/consumer_profile_screen.dart';
 import '../../Consumer/features/profile/presentation/screens/edit_consumer_profile_screen.dart';
 
-import '../../../../Consumer/features/location/presentation/providers/location_provider.dart';
+
 
 class RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -38,14 +38,6 @@ class RouterNotifier extends ChangeNotifier {
       authControllerProvider,
       (previous, next) {
         if (previous != next) {
-          notifyListeners();
-        }
-      },
-    );
-    _ref.listen<LocationState>(
-      locationProvider,
-      (previous, next) {
-        if (previous?.selectedAddress != next.selectedAddress) {
           notifyListeners();
         }
       },
@@ -64,9 +56,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: AppRoutes.home,
     refreshListenable: notifier,
     redirect: (context, state) async {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: AppConstants.accessTokenKey);
-      final actorType = await storage.read(key: AppConstants.actorTypeKey);
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(AppConstants.accessTokenKey);
+      final actorType = prefs.getString(AppConstants.actorTypeKey);
       final isAuthenticated = token != null;
       final isOnAuth = state.matchedLocation == AppRoutes.phone ||
           state.matchedLocation == AppRoutes.otp;
@@ -88,15 +80,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         }
 
         // Consumer location enforcement
-        if (actorType == AppConstants.actorConsumer) {
-          final locationState = ref.read(locationProvider);
-          final isLocationSet = locationState.selectedAddress != null;
-          final isOnLocation = state.matchedLocation == AppRoutes.location;
-
-          // if (!isLocationSet && !isOnLocation && !isOnAuth) {
-          //   return AppRoutes.location;
-          // }
-        }
+        // if (actorType == AppConstants.actorConsumer) {
+        //   final authState = ref.read(authControllerProvider);
+        //   final isLocationSet = authState.maybeWhen(
+        //     consumerAuthenticated: (consumer) => consumer.selectedAddress != null,
+        //     orElse: () => false,
+        //   );
+        //   final isOnLocation = state.matchedLocation == AppRoutes.location;
+        //   if (!isLocationSet && !isOnLocation && !isOnAuth) {
+        //     return AppRoutes.location;
+        //   }
+        // }
       }
       
       return null;

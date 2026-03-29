@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../utils/app_constants.dart';
 import 'api_interceptors.dart';
@@ -25,7 +24,7 @@ class ApiClient {
     );
 
     dio.interceptors.addAll([
-      AuthInterceptor(dio, const FlutterSecureStorage()),
+      AuthInterceptor(dio),
       PrettyDioLogger(
         requestHeader: true,
         requestBody: true,

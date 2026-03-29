@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:locaura_parter/Consumer/features/auth/domain/entities/consumer.entity.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../Retailer/features/auth/presentation/controllers/auth_controller.dart';
@@ -28,6 +29,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
   double? _lat;
   double? _lng;
   bool _isLocating = false;
+  String? _locationStatus; // 'success' | 'error' | null
 
   @override
   void initState() {
@@ -44,23 +46,82 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
       if (addr.location != null) {
         _lat = addr.location!.coordinates[1];
         _lng = addr.location!.coordinates[0];
+        _locationStatus = 'success';
       }
-    } else {
-      _fetchCurrentLocation();
     }
   }
 
-  Future<void> _fetchCurrentLocation() async {
-    setState(() => _isLocating = true);
+  Future<void> _fetchAndFillLocation() async {
+    setState(() {
+      _isLocating = true;
+      _locationStatus = null;
+    });
+
     try {
-      final position = await Geolocator.getCurrentPosition();
+      // Check / request permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever ||
+          permission == LocationPermission.denied) {
+        setState(() {
+          _isLocating = false;
+          _locationStatus = 'error';
+        });
+        return;
+      }
+
+      // Get GPS position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
       setState(() {
         _lat = position.latitude;
         _lng = position.longitude;
-        _isLocating = false;
       });
+
+      // Reverse geocode to get address fields
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+
+        // Build street line 1
+        final street = [place.subThoroughfare, place.thoroughfare]
+            .where((s) => s != null && s.isNotEmpty)
+            .join(' ');
+
+        // Build line 2 (locality / sublocality)
+        final locality = place.subLocality?.isNotEmpty == true
+            ? place.subLocality!
+            : place.locality ?? '';
+
+        setState(() {
+          if (street.isNotEmpty) _line1Controller.text = street;
+          if (locality.isNotEmpty) _line2Controller.text = locality;
+          if ((place.locality ?? '').isNotEmpty) _cityController.text = place.locality!;
+          if ((place.administrativeArea ?? '').isNotEmpty) _stateController.text = place.administrativeArea!;
+          if ((place.postalCode ?? '').isNotEmpty) _zipController.text = place.postalCode!;
+          _isLocating = false;
+          _locationStatus = 'success';
+        });
+      } else {
+        setState(() {
+          _isLocating = false;
+          // Coordinates saved but no address found
+          _locationStatus = 'success';
+        });
+      }
     } catch (e) {
-      setState(() => _isLocating = false);
+      setState(() {
+        _isLocating = false;
+        _locationStatus = 'error';
+      });
     }
   }
 
@@ -88,7 +149,9 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
       state: _stateController.text.trim(),
       pincode: _zipController.text.trim(),
       isDefault: _isDefault,
-      location: (_lat != null && _lng != null) ? LocationEntity(coordinates: [_lng!, _lat!]) : null,
+      location: (_lat != null && _lng != null)
+          ? LocationEntity(coordinates: [_lng!, _lat!])
+          : null,
     );
 
     if (isEditing) {
@@ -97,9 +160,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
       await ref.read(authControllerProvider.notifier).addConsumerAddress(address);
     }
 
-    if (mounted) {
-      Navigator.pop(context);
-    }
+    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -118,7 +179,8 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
           topRight: Radius.circular(20.r),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(24.w, 12.h, 24.w, MediaQuery.of(context).viewInsets.bottom + 24.h),
+      padding: EdgeInsets.fromLTRB(
+          24.w, 12.h, 24.w, MediaQuery.of(context).viewInsets.bottom + 24.h),
       child: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -126,6 +188,7 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Drag handle
               Center(
                 child: Container(
                   width: 40.w,
@@ -136,43 +199,52 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                   ),
                 ),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 20.h),
               Text(
                 isEditing ? 'Edit Address' : 'Add New Address',
-                style: GoogleFonts.inter(fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.charcoal),
+                style: GoogleFonts.inter(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.charcoal),
               ),
               SizedBox(height: 16.h),
-              if (_isLocating)
-                const LinearProgressIndicator(color: AppColors.gold)
-              else if (_lat != null)
-                Container(
-                  padding: EdgeInsets.all(10.w),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8.r),
-                    border: Border.all(color: Colors.green.withOpacity(0.2)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.green, size: 16),
-                      SizedBox(width: 8.w),
-                      Text(
-                        isEditing ? 'Location Pin Saved' : 'GPS Coordinates Locked',
-                        style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.green[700]),
-                      ),
-                    ],
-                  ),
+
+              // ── Auto-detect location button ──────────────────────────────
+              _buildLocationButton(),
+              SizedBox(height: 8.h),
+
+              // Status banner
+              if (_locationStatus == 'success')
+                _buildStatusBanner(
+                  icon: Icons.check_circle_outline,
+                  color: Colors.green,
+                  message: _lat != null
+                      ? 'GPS pinned · Fields auto-filled from your location'
+                      : 'Location captured',
+                )
+              else if (_locationStatus == 'error')
+                _buildStatusBanner(
+                  icon: Icons.error_outline,
+                  color: Colors.orange,
+                  message: 'Could not detect location — fill fields manually',
                 ),
+
               SizedBox(height: 20.h),
+
+              // ── Form fields ──────────────────────────────────────────────
               _buildFieldLabel('Label'),
-              _buildTextField(_labelController, 'Home, Office, etc.'),
-              SizedBox(height: 16.h),
+              _buildTextField(_labelController, 'Home, Office, Other…'),
+              SizedBox(height: 14.h),
+
               _buildFieldLabel('Address Line 1'),
               _buildTextField(_line1Controller, 'Building, Street name'),
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
+
               _buildFieldLabel('Address Line 2 (Optional)'),
-              _buildTextField(_line2Controller, 'Apartment, Suite, Landmark', isRequired: false),
-              SizedBox(height: 16.h),
+              _buildTextField(_line2Controller, 'Apartment, Suite, Landmark',
+                  isRequired: false),
+              SizedBox(height: 14.h),
+
               Row(
                 children: [
                   Expanded(
@@ -196,36 +268,47 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
                   ),
                 ],
               ),
-              SizedBox(height: 16.h),
-              _buildFieldLabel('Zip Code'),
-              _buildTextField(_zipController, 'Pincode', keyboardType: TextInputType.number),
-              SizedBox(height: 16.h),
+              SizedBox(height: 14.h),
+
+              _buildFieldLabel('Pincode'),
+              _buildTextField(_zipController, '6-digit pincode',
+                  keyboardType: TextInputType.number),
+              SizedBox(height: 14.h),
+
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
                   'Set as Default Address',
-                  style: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w500, color: AppColors.charcoal),
+                  style: GoogleFonts.inter(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.charcoal),
                 ),
                 activeColor: AppColors.gold,
                 value: _isDefault,
                 onChanged: (v) => setState(() => _isDefault = v),
               ),
-              SizedBox(height: 32.h),
+              SizedBox(height: 24.h),
+
+              // Save button
               SizedBox(
                 width: double.infinity,
                 height: 52.h,
                 child: ElevatedButton(
-                  onPressed: (isLoading || (_isLocating && !isEditing)) ? null : _handleSave,
+                  onPressed: isLoading ? null : _handleSave,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.charcoal,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r)),
                   ),
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                      ? const CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2)
                       : Text(
                           isEditing ? 'Update Address' : 'Save Address',
-                          style: GoogleFonts.inter(fontSize: 15.sp, fontWeight: FontWeight.w600),
+                          style: GoogleFonts.inter(
+                              fontSize: 15.sp, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),
@@ -236,14 +319,83 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
     );
   }
 
-  Widget _buildFieldLabel(String label) {
-    return Padding(
-      padding: EdgeInsets.only(bottom: 6.h),
-      child: Text(label, style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.grey600)),
+  Widget _buildLocationButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 46.h,
+      child: OutlinedButton.icon(
+        onPressed: _isLocating ? null : _fetchAndFillLocation,
+        icon: _isLocating
+            ? SizedBox(
+                width: 16.w,
+                height: 16.w,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: AppColors.charcoal),
+              )
+            : Icon(Icons.my_location_rounded, size: 18.sp, color: AppColors.charcoal),
+        label: Text(
+          _isLocating ? 'Detecting location…' : 'Use Current Location',
+          style: GoogleFonts.inter(
+            fontSize: 13.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.charcoal,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: AppColors.charcoal.withValues(alpha: 0.4)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+          backgroundColor: AppColors.cream.withValues(alpha: 0.5),
+        ),
+      ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType? keyboardType, bool isRequired = true}) {
+  Widget _buildStatusBanner({
+    required IconData icon,
+    required Color color,
+    required String message,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8.r),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 16.sp),
+          SizedBox(width: 8.w),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.inter(fontSize: 12.sp, color: color.withValues(alpha: 0.85)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6.h),
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: AppColors.grey600),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    TextInputType? keyboardType,
+    bool isRequired = true,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
@@ -257,8 +409,12 @@ class _AddAddressSheetState extends ConsumerState<AddAddressSheet> {
         hintStyle: GoogleFonts.inter(color: AppColors.grey400, fontSize: 13.sp),
         filled: true,
         fillColor: AppColors.offWhite,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10.r), borderSide: BorderSide.none),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.r),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding:
+            EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       ),
     );
   }

@@ -48,14 +48,9 @@ class HomeNotifier extends StateNotifier<HomeState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       // 1. Fetch categories
-      final categories = await _repository.getCategories();
+      // final categories = await _repository.getCategories();
       
-      // 2. Get location from auth (previously from geolocator)
-      final authState = _ref.watch(authControllerProvider);
-      final address = authState.maybeWhen(
-        consumerAuthenticated: (c) => c.selectedAddress,
-        orElse: () => null,
-      );
+      final address = null; // Removed ref.watch logic here, address should come from arguments or be passed separately to the provider, but for now we fetch generally or use defaults.
       
       // 3. Fetch nearby stores
       List<NearbyStoreEntity> stores = [];
@@ -69,7 +64,6 @@ class HomeNotifier extends StateNotifier<HomeState> {
 
       state = state.copyWith(
         isLoading: false,
-        categories: categories,
         nearbyStores: stores,
       );
     } catch (e) {

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
-import 'package:locaura_parter/Consumer/features/location/presentation/providers/location_provider.dart';
+import 'package:locaura_parter/Retailer/features/auth/presentation/controllers/auth_controller.dart';
 import '../widgets/nearby_store_card.dart';
 import '../../domain/entities/nearby_store.entity.dart';
 import '../providers/home_provider.dart';
@@ -84,7 +84,11 @@ class _ConsumerHomeScreenState extends ConsumerState<ConsumerHomeScreen> {
                           ),
                           Consumer(
                             builder: (context, ref, _) {
-                              final address = ref.watch(locationProvider).selectedAddress;
+                              final authState = ref.watch(authControllerProvider);
+                              final address = authState.maybeWhen(
+                                consumerAuthenticated: (c) => c.selectedAddress,
+                                orElse: () => null,
+                              );
                               return Text(
                                 address != null ? '${address.label} (${address.line1})' : 'Select Location',
                                 style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),

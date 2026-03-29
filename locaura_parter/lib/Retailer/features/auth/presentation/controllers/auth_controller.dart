@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../core/di/locator.dart';
 import '../../../../../core/utils/app_constants.dart';
 import '../../../../../Consumer/features/auth/domain/entities/consumer.entity.dart';
-import '../../../../../Consumer/features/location/presentation/providers/location_provider.dart';
 import '../../domain/entities/retailer.entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/send_otp.usecase.dart';
@@ -26,17 +25,16 @@ class AuthController extends StateNotifier<AuthState> {
   final SendOtpUseCase _sendOtp;
   final VerifyOtpUseCase _verifyOtp;
   final AuthRepository _repository;
-  final FlutterSecureStorage _storage;
-  final Ref _ref;
+  final SharedPreferences _prefs;
 
-  AuthController(this._sendOtp, this._verifyOtp, this._repository, this._ref)
-      : _storage = const FlutterSecureStorage(),
+  AuthController(this._sendOtp, this._verifyOtp, this._repository)
+      : _prefs = getIt<SharedPreferences>(),
         super(const AuthState.initial());
 
   Future<void> loadPersistedProfile() async {
     try {
-      final actorType = await _storage.read(key: AppConstants.actorTypeKey);
-      final token = await _storage.read(key: AppConstants.accessTokenKey);
+      final actorType = _prefs.getString(AppConstants.actorTypeKey);
+      final token = _prefs.getString(AppConstants.accessTokenKey);
       
       if (token == null) {
         state = const AuthState.initial();
@@ -85,18 +83,12 @@ class AuthController extends StateNotifier<AuthState> {
     await result.fold(
       (failure) async => state = AuthState.error(failure.message),
       (entity) async {
-        await _storage.write(key: AppConstants.actorTypeKey, value: actorType);
-        
         if (actorType == AppConstants.actorConsumer) {
           final consumer = entity as ConsumerEntity;
-          await _storage.write(key: AppConstants.accessTokenKey, value: consumer.token);
-          // ConsumerEntity is already saved to storage in the repository layer
+          // token already saved in repository layer
           state = AuthState.consumerAuthenticated(consumer);
-          // Sync with location provider
-          _ref.read(locationProvider.notifier).setAddresses(consumer.addresses);
         } else {
           final retailer = entity as RetailerEntity;
-          await _storage.write(key: AppConstants.accessTokenKey, value: retailer.token);
           state = AuthState.authenticated(retailer);
         }
       },
@@ -104,7 +96,6 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await _storage.delete(key: AppConstants.actorTypeKey);
     await _repository.logout();
     state = const AuthState.initial();
   }
@@ -121,8 +112,6 @@ class AuthController extends StateNotifier<AuthState> {
       },
       (profile) {
         state = AuthState.consumerAuthenticated(profile);
-        // Sync with location provider
-        _ref.read(locationProvider.notifier).setAddresses(profile.addresses);
       },
     );
   }
@@ -171,8 +160,6 @@ class AuthController extends StateNotifier<AuthState> {
       },
       (consumer) {
         state = AuthState.consumerAuthenticated(consumer);
-        // Sync with location provider
-        _ref.read(locationProvider.notifier).setAddresses(consumer.addresses);
       },
     );
   }
@@ -192,8 +179,6 @@ class AuthController extends StateNotifier<AuthState> {
       (addresses) {
         final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
         state = AuthState.consumerAuthenticated(updatedConsumer);
-        // Also update the location provider
-        _ref.read(locationProvider.notifier).setAddresses(addresses);
       },
     );
   }
@@ -213,8 +198,6 @@ class AuthController extends StateNotifier<AuthState> {
       (addresses) {
         final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
         state = AuthState.consumerAuthenticated(updatedConsumer);
-        // Also update the location provider
-        _ref.read(locationProvider.notifier).setAddresses(addresses);
       },
     );
   }
@@ -229,8 +212,6 @@ class AuthController extends StateNotifier<AuthState> {
       (addresses) {
         final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
         state = AuthState.consumerAuthenticated(updatedConsumer);
-        // Sync with location provider
-        _ref.read(locationProvider.notifier).setAddresses(addresses);
       },
     );
   }
@@ -250,8 +231,6 @@ class AuthController extends StateNotifier<AuthState> {
       (addresses) {
         final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
         state = AuthState.consumerAuthenticated(updatedConsumer);
-        // Sync with location provider
-        _ref.read(locationProvider.notifier).setAddresses(addresses);
       },
     );
   }
@@ -263,6 +242,5 @@ final authControllerProvider =
     SendOtpUseCase(getIt()),
     VerifyOtpUseCase(getIt()),
     getIt<AuthRepository>(),
-    ref,
   );
 });

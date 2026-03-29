@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Consumer, IConsumer } from '../models/Consumer.model';
 
 export class ConsumerRepository {
@@ -21,6 +22,9 @@ export class ConsumerRepository {
     }
 
     async add_address(id: string, address: any): Promise<IConsumer | null> {
+         if (!address._id) {
+             address._id = new mongoose.Types.ObjectId();
+         }
          return Consumer.findByIdAndUpdate(
             id,
             { $push: { addresses: address } },

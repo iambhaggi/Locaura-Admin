@@ -1,7 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:locaura_parter/Consumer/features/auth/domain/entities/consumer.entity.dart' as c;
-import 'package:locaura_parter/Retailer/features/store/domain/entities/store.entity.dart' show AddressEntity;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:locaura_parter/core/utils/app_constants.dart';
@@ -15,10 +13,9 @@ import '../models/retailer.model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
-  final FlutterSecureStorage _storage;
   final SharedPreferences _prefs;
 
-  AuthRepositoryImpl(this._remote, this._storage, this._prefs);
+  AuthRepositoryImpl(this._remote, this._prefs);
 
   @override
   ApiResult<void> sendOtp(String phone, String actorType) async {
@@ -45,16 +42,9 @@ class AuthRepositoryImpl implements AuthRepository {
           token: response.data['token'],
         );
 
-        // Save token
         // Save tokens
-        await _storage.write(
-          key: AppConstants.accessTokenKey,
-          value: response.data['token'],
-        );
-        await _storage.write(
-          key: AppConstants.actorTypeKey,
-          value: actorType,
-        );
+        await _prefs.setString(AppConstants.accessTokenKey, response.data['token'] as String);
+        await _prefs.setString(AppConstants.actorTypeKey, actorType);
 
         return Right(entity);
       } else {
@@ -66,14 +56,8 @@ class AuthRepositoryImpl implements AuthRepository {
         );
 
         // Save tokens
-        await _storage.write(
-          key: AppConstants.accessTokenKey,
-          value: response.data['token'],
-        );
-        await _storage.write(
-          key: AppConstants.actorTypeKey,
-          value: actorType,
-        );
+        await _prefs.setString(AppConstants.accessTokenKey, response.data['token'] as String);
+        await _prefs.setString(AppConstants.actorTypeKey, actorType);
 
         return Right(entity);
       }
@@ -87,7 +71,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _prefs.remove(AppConstants.accessTokenKey);
       await _prefs.remove(AppConstants.refreshTokenKey);
-      await _storage.deleteAll();
+      await _prefs.remove(AppConstants.actorTypeKey);
       await clearPersistedProfile();
       return const Right(null);
     } catch (e) {
@@ -148,8 +132,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final response = await _remote.getConsumerProfile();
       
-      final token = response.token;
-      if (token == null) return Left(ServerFailure(message: 'Authentication token missing'));
+      final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey);
+      if (token == null) return const Left(ServerFailure(message: 'Authentication token missing'));
       
       final entity = response.consumer.toEntity(token: token);
 
@@ -203,7 +187,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       final response = await _remote.addConsumerAddress(model);
-      final entity = response.consumer.toEntity(token: response.token ?? '');
+      final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
+      final entity = response.consumer.toEntity(token: token);
 
       return Right(entity.addresses);
     } catch (e) {
@@ -233,7 +218,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       final response = await _remote.updateConsumerAddress(addressId, model);
-      final entity = response.consumer.toEntity(token: response.token ?? '');
+      final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
+      final entity = response.consumer.toEntity(token: token);
 
       return Right(entity.addresses);
     } catch (e) {
@@ -244,7 +230,8 @@ class AuthRepositoryImpl implements AuthRepository {
   ApiResult<List<c.AddressEntity>> setDefaultAddress(String addressId) async {
     try {
       final response = await _remote.setDefaultAddress(addressId);
-      final entity = response.consumer.toEntity(token: response.token ?? '');
+      final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
+      final entity = response.consumer.toEntity(token: token);
 
       return Right(entity.addresses);
     } catch (e) {
@@ -256,7 +243,8 @@ class AuthRepositoryImpl implements AuthRepository {
   ApiResult<List<c.AddressEntity>> deleteConsumerAddress(String addressId) async {
     try {
       final response = await _remote.deleteConsumerAddress(addressId);
-      final entity = response.consumer.toEntity(token: response.token ?? '');
+      final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
+      final entity = response.consumer.toEntity(token: token);
 
       return Right(entity.addresses);
     } catch (e) {

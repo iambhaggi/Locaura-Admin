@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/api_client.dart';
 import '../../Retailer/features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../Retailer/features/auth/data/repositories/auth_repository_impl.dart';
@@ -20,7 +19,6 @@ final getIt = GetIt.instance;
 Future<void> configureDependencies() async {
   final prefs = await SharedPreferences.getInstance();
   getIt.registerSingleton<SharedPreferences>(prefs);
-  getIt.registerSingleton<FlutterSecureStorage>(const FlutterSecureStorage());
 
   getIt.registerSingleton<ApiClient>(ApiClient());
   getIt.registerSingleton<Dio>(getIt<ApiClient>().dio);
@@ -31,7 +29,6 @@ Future<void> configureDependencies() async {
   getIt.registerSingleton<AuthRepository>(
     AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
-      getIt<FlutterSecureStorage>(),
       getIt<SharedPreferences>(),
     ),
   );

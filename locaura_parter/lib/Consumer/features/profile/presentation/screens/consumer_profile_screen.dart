@@ -80,7 +80,7 @@ class ConsumerProfileScreen extends ConsumerWidget {
 
   Widget _buildAppBar(BuildContext context, dynamic consumer) {
     return SliverAppBar(
-      expandedHeight: 200.h,
+      expandedHeight: 350.h,
       pinned: true,
       backgroundColor: AppColors.charcoal,
       flexibleSpace: FlexibleSpaceBar(
