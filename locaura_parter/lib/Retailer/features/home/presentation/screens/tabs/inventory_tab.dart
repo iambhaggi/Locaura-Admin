@@ -180,11 +180,71 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        product.name,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.bodyMedium.copyWith(color: Colors.black),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              product.name,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTextStyles.bodyMedium.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+                                            ),
+                                          ),
+                                          Consumer(
+                                            builder: (context, ref, child) => PopupMenuButton<String>(
+                                              icon: const Icon(Icons.more_vert, size: 16, color: Colors.grey),
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(),
+                                              onSelected: (value) {
+                                                ref.read(productControllerProvider.notifier).updateExistingProduct(
+                                                      _selectedStore!.id,
+                                                      product.id,
+                                                      {'status': value},
+                                                    );
+                                              },
+                                              itemBuilder: (context) => [
+                                                const PopupMenuItem(
+                                                  value: 'active',
+                                                  child: Text('Set Active'),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'inactive',
+                                                  child: Text('Set Inactive'),
+                                                ),
+                                                const PopupMenuItem(
+                                                  value: 'draft',
+                                                  child: Text('Set Draft'),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 2.h),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: product.status == 'active' ? Colors.green.shade50 : Colors.orange.shade50,
+                                              borderRadius: BorderRadius.circular(4.r),
+                                            ),
+                                            child: Text(
+                                              product.status.toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 8.sp,
+                                                fontWeight: FontWeight.bold,
+                                                color: product.status == 'active' ? Colors.green.shade700 : Colors.orange.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            'Stock: ${product.totalStock}',
+                                            style: AppTextStyles.labelSmall.copyWith(fontSize: 9.sp, color: Colors.grey),
+                                          ),
+                                        ],
                                       ),
                                       SizedBox(height: 4.h),
                                       Text.rich(
@@ -204,6 +264,7 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
                                                   : currencyFormatter.format(product.basePrice),
                                               style: AppTextStyles.labelMedium.copyWith(
                                                 color: const Color(0xFFFA641E),
+                                                fontWeight: FontWeight.w900,
                                               ),
                                             ),
                                           ],

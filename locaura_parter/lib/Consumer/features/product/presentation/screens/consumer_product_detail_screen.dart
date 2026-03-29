@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
 import '../providers/product_detail_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../home/domain/entities/nearby_store.entity.dart';
 
 class ConsumerProductDetailScreen extends ConsumerStatefulWidget {
   final String productId;
@@ -17,10 +18,15 @@ class ConsumerProductDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDetailScreen> {
-  // Selection state
-  // String? _selectedVariantId; // TODO: Use for add to cart
   String? _selectedSize;
-  // String? _selectedColor; // TODO: Use for product variants if color exists
+  int _currentImageIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   // Removed mock data
 
@@ -41,12 +47,26 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
       return const Scaffold(body: Center(child: Text('Product not found')));
     }
 
-    // Extract unique sizes and colors from variants
-    final uniqueSizes = product.variants.map((v) => v.size).whereType<String>().toSet().toList();
+    // Extract unique sizes from active variants
+    final activeVariants = product.variants.where((v) => v.is_active).toList();
+    final uniqueSizes = activeVariants.map((v) => v.size).whereType<String>().toSet().toList();
+    
     // Initialize initial selection if not set
     if (_selectedSize == null && uniqueSizes.isNotEmpty) {
       _selectedSize = uniqueSizes.first;
     }
+
+    // Get selected variant details
+    final selectedVariant = activeVariants.firstWhere(
+      (v) => v.size == _selectedSize,
+      orElse: () => activeVariants.first,
+    );
+
+    final currentPrice = selectedVariant.price;
+    final comparePrice = selectedVariant.compare_at_price ?? product.base_compare_at_price;
+    final hasDiscount = comparePrice != null && comparePrice > currentPrice;
+    final discountPercent = hasDiscount ? (((comparePrice - currentPrice) / comparePrice) * 100).toInt() : 0;
+    final isOutOfStock = selectedVariant.stock <= 0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -76,14 +96,64 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image gallery placeholder
-                Container(
-                  width: double.infinity,
-                  height: 380.h,
-                  color: AppColors.offWhite,
-                  child: product.cover_images.isNotEmpty
-                      ? Image.network(product.cover_images.first, fit: BoxFit.cover)
-                      : Center(child: Icon(Icons.image_outlined, color: AppColors.grey300, size: 80.sp)),
+                // Image Carousel
+                Stack(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 420.h,
+                      color: AppColors.offWhite,
+                      child: product.cover_images.isNotEmpty
+                          ? PageView.builder(
+                              controller: _pageController,
+                              onPageChanged: (index) => setState(() => _currentImageIndex = index),
+                              itemCount: product.cover_images.length,
+                              itemBuilder: (context, index) => Image.network(
+                                product.cover_images[index],
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Center(child: Icon(Icons.image_outlined, color: AppColors.grey300, size: 80.sp)),
+                    ),
+                    if (product.cover_images.length > 1)
+                      Positioned(
+                        bottom: 16.h,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            product.cover_images.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: EdgeInsets.symmetric(horizontal: 4.w),
+                              width: _currentImageIndex == index ? 24.w : 8.w,
+                              height: 8.w,
+                              decoration: BoxDecoration(
+                                color: _currentImageIndex == index ? AppColors.charcoal : AppColors.grey300,
+                                borderRadius: BorderRadius.circular(4.r),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (isOutOfStock)
+                      Positioned(
+                        top: 20.h,
+                        right: 20.w,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            'OUT OF STOCK',
+                            style: GoogleFonts.inter(fontSize: 10.sp, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 Padding(
                   padding: EdgeInsets.all(20.w),
@@ -111,7 +181,7 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                               ],
                             ),
                           ),
-                          if (product.base_compare_at_price != null && product.base_compare_at_price! > product.base_price)
+                          if (hasDiscount)
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                               decoration: BoxDecoration(
@@ -119,7 +189,7 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                                 borderRadius: BorderRadius.circular(6.r),
                               ),
                               child: Text(
-                                '${(((product.base_compare_at_price! - product.base_price) / product.base_compare_at_price!) * 100).toInt()}% OFF',
+                                '$discountPercent% OFF',
                                 style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w700, color: AppColors.discountRed),
                               ),
                             ),
@@ -131,17 +201,17 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            '₹${product.base_price.toInt()}',
-                            style: GoogleFonts.inter(fontSize: 24.sp, fontWeight: FontWeight.w700, color: AppColors.charcoal),
+                            '₹${currentPrice.toInt()}',
+                            style: GoogleFonts.inter(fontSize: 26.sp, fontWeight: FontWeight.w900, color: AppColors.charcoal),
                           ),
-                          if (product.base_compare_at_price != null) ...[
+                          if (hasDiscount) ...[
                             SizedBox(width: 8.w),
                             Padding(
                               padding: EdgeInsets.only(bottom: 4.h),
                               child: Text(
-                                'M.R.P: ₹${product.base_compare_at_price!.toInt()}',
+                                '₹${comparePrice!.toInt()}',
                                 style: GoogleFonts.inter(
-                                  fontSize: 13.sp,
+                                  fontSize: 14.sp,
                                   color: AppColors.grey500,
                                   decoration: TextDecoration.lineThrough,
                                 ),
@@ -162,25 +232,48 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                         Row(
                           children: uniqueSizes.map((size) {
                             final isSelected = _selectedSize == size;
+                            final variant = activeVariants.firstWhere((v) => v.size == size);
+                            final isVariantOutOfStock = variant.stock <= 0;
+
                             return GestureDetector(
                               onTap: () => setState(() => _selectedSize = size),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin: EdgeInsets.only(right: 12.w),
-                                width: 48.w,
-                                height: 48.w,
-                                decoration: BoxDecoration(
-                                  color: isSelected ? AppColors.charcoal : Colors.white,
-                                  border: Border.all(color: isSelected ? AppColors.charcoal : AppColors.grey300),
-                                  borderRadius: BorderRadius.circular(24.r),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  size,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14.sp,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                    color: isSelected ? Colors.white : AppColors.charcoal,
+                              child: Opacity(
+                                opacity: isVariantOutOfStock ? 0.5 : 1.0,
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  margin: EdgeInsets.only(right: 12.w),
+                                  width: 52.w,
+                                  height: 52.w,
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? AppColors.charcoal : Colors.white,
+                                    border: Border.all(
+                                      color: isSelected ? AppColors.charcoal : AppColors.grey300,
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12.r),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      Text(
+                                        size,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14.sp,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          color: isSelected ? Colors.white : AppColors.charcoal,
+                                        ),
+                                      ),
+                                      if (isVariantOutOfStock)
+                                        Transform.rotate(
+                                          angle: -0.5,
+                                          child: Container(
+                                            width: 40.w,
+                                            height: 1,
+                                            color: AppColors.grey400,
+                                          ),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -190,50 +283,80 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                         SizedBox(height: 32.h),
                       ],
                       
-                      // Store Info (Simplified for MVP)
-                      Container(
-                        padding: EdgeInsets.all(16.w),
-                        decoration: BoxDecoration(
-                          color: AppColors.cream,
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: AppColors.gold.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 48.w,
-                              height: 48.w,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Icon(Icons.store_mall_directory_outlined, color: AppColors.gold, size: 24.sp),
+                      // Store Info
+                      Consumer(
+                        builder: (context, ref, child) {
+                          NearbyStoreEntity? store;
+                          if (product.store is Map<String, dynamic>) {
+                            store = NearbyStoreEntity.fromJson(product.store as Map<String, dynamic>);
+                          } else if (product.store is NearbyStoreEntity) {
+                            store = product.store as NearbyStoreEntity;
+                          }
+
+                          return Container(
+                            padding: EdgeInsets.all(16.w),
+                            decoration: BoxDecoration(
+                              color: AppColors.cream,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: AppColors.gold.withOpacity(0.3)),
                             ),
-                            SizedBox(width: 12.w),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            child: InkWell(
+                              onTap: () {
+                                if (store != null) {
+                                  context.push(
+                                    AppRoutes.consumerStoreProducts.replaceAll(':storeId', store.id),
+                                  );
+                                }
+                              },
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Sold by Partner Store',
-                                    style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
+                                  Container(
+                                    width: 48.w,
+                                    height: 48.w,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      image: store?.banner_url != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(store!.banner_url!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: store?.banner_url == null
+                                        ? Icon(Icons.store_mall_directory_outlined, color: AppColors.gold, size: 24.sp)
+                                        : null,
                                   ),
-                                  SizedBox(height: 4.h),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.star_rounded, color: AppColors.gold, size: 14.sp),
-                                      SizedBox(width: 4.w),
-                                      Text('${product.rating}', style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w600)),
-                                      SizedBox(width: 12.w),
-                                      Text('${product.total_reviews} reviews', style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500)),
-                                    ],
+                                  SizedBox(width: 12.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          store?.name ?? 'Partner Store',
+                                          style: GoogleFonts.inter(fontSize: 13.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Row(
+                                          children: [
+                                            Icon(Icons.star_rounded, color: AppColors.gold, size: 14.sp),
+                                            SizedBox(width: 4.w),
+                                            Text('${store?.rating ?? product.rating}',
+                                                style: GoogleFonts.inter(fontSize: 12.sp, fontWeight: FontWeight.w600)),
+                                            SizedBox(width: 12.w),
+                                            Text('${store?.rating_count ?? product.total_reviews} reviews',
+                                                style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500)),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  Icon(Icons.chevron_right_rounded, color: AppColors.grey400),
                                 ],
                               ),
                             ),
-                            Icon(Icons.chevron_right_rounded, color: AppColors.grey400),
-                          ],
-                        ),
+                          );
+                        },
                       ),
                       
                       if (product.description != null) ...[
@@ -289,19 +412,22 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                     child: SizedBox(
                       height: 56.h,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Real Add to Cart
-                          context.push(AppRoutes.consumerCart);
-                        },
+                        onPressed: isOutOfStock
+                            ? null
+                            : () {
+                                // TODO: Add current variant to cart
+                                context.push(AppRoutes.consumerCart);
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.charcoal,
                           foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors.grey300,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
                           elevation: 0,
                         ),
                         child: Text(
-                          'Add to Cart',
-                          style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w600),
+                          isOutOfStock ? 'Out of Stock' : 'Add to Cart',
+                          style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),

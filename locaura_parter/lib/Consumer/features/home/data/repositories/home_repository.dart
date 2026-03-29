@@ -42,10 +42,10 @@ class HomeRepository {
     }
   }
 
-  Future<Map<String, dynamic>> searchNearby(double lat, double lng, String query, {double radius = 10}) async {
+  Future<Map<String, dynamic>> searchNearby(String query, {double? lat, double? lng, double radius = 10}) async {
     try {
       final response = await _apiClient.get(
-        ApiEndpoints.consumerSearchStoresAndProducts(lat, lng, query, radius: radius),
+        ApiEndpoints.consumerSearchStoresAndProducts(query, lat: lat, lng: lng, radius: radius),
       );
       if (response.data['success'] == true) {
         return response.data['data'] as Map<String, dynamic>;

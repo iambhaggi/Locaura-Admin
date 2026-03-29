@@ -195,7 +195,7 @@ class _ProductCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: product.status == 'published' ? Colors.green.shade100 : Colors.orange.shade100,
+                          color: product.status == 'active' ? Colors.green.shade100 : Colors.orange.shade100,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -203,14 +203,43 @@ class _ProductCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: product.status == 'published' ? Colors.green.shade900 : Colors.orange.shade900,
+                            color: product.status == 'active' ? Colors.green.shade900 : Colors.orange.shade900,
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: AppSizes.s8),
                       Text(
                         'Stock: ${product.totalStock}',
                         style: context.textTheme.bodySmall?.copyWith(fontSize: 10),
+                      ),
+                      const Spacer(),
+                      Consumer(
+                        builder: (context, ref, child) => PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onSelected: (value) {
+                            ref.read(productControllerProvider.notifier).updateExistingProduct(
+                                  storeId,
+                                  product.id,
+                                  {'status': value},
+                                );
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'active',
+                              child: Text('Set Active'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'inactive',
+                              child: Text('Set Inactive'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'draft',
+                              child: Text('Set Draft'),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

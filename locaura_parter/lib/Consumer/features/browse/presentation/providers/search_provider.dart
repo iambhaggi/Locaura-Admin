@@ -77,11 +77,10 @@ class SearchNotifier extends StateNotifier<SearchState> {
           orElse: () {},
         );
 
-        if (lat == null || lng == null) {
-          throw Exception("Please set your location first to search.");
-        }
+        // Removed strict location check as backend now supports global search by address string
+        // but we still prefer using coordinates if available for proximity.
 
-        final data = await _repository.searchNearby(lat!, lng!, query);
+        final data = await _repository.searchNearby(query);
         
         final storesJson = data['stores'] as List? ?? [];
         final stores = storesJson.map((json) => NearbyStoreEntity.fromJson(json as Map<String, dynamic>)).toList();
