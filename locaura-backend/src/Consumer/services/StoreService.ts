@@ -75,4 +75,53 @@ export class StoreService {
             variants
         };
     }
+
+    async search_stores_and_products(params: {lat: number, lng: number, query: string, radius_km: number}) {
+        const { lat, lng, query, radius_km } = params;
+        const maxDistanceMeters = radius_km * 1000;
+        
+        // Find nearby active stores
+        const nearbyStores = await StoreModel.find({
+            status: 'active',
+            is_active: true,
+            location: {
+                $near: {
+                    $geometry: { type: "Point", coordinates: [lng, lat] },
+                    $maxDistance: maxDistanceMeters
+                }
+            }
+        }).select('_id store_name slug logo_url delivery_fee delivery_radius_km rating total_reviews is_open_now');
+
+        const storeIds = nearbyStores.map(s => s._id);
+
+        if (storeIds.length === 0) {
+            return { stores: [], products: [] };
+        }
+
+        const searchRegex = new RegExp(query, 'i');
+        const matchingStores = nearbyStores.filter(s => searchRegex.test(s.store_name));
+
+        const matchingProducts = await ProductModel.find({
+            store_id: { $in: storeIds },
+            status: 'active',
+            $or: [
+                { name: { $regex: searchRegex } },
+                { description: { $regex: searchRegex } },
+                { tags: { $regex: searchRegex } },
+                { brand: { $regex: searchRegex } },
+                { categories: { $regex: searchRegex } }
+            ]
+        })
+        .select('_id name description base_price base_compare_at_price cover_images store_id categories brand rating total_reviews slug')
+        .populate({
+            path: 'store_id',
+            select: 'store_name slug logo_url delivery_fee delivery_radius_km rating total_reviews'
+        })
+        .limit(50);
+
+        return {
+            stores: matchingStores,
+            products: matchingProducts
+        };
+    }
 }

@@ -32,6 +32,9 @@ class ApiEndpoints {
     if (category != null) url += '&category=$category';
     return url;
   }
+  static String consumerSearchStoresAndProducts(double lat, double lng, String query, {double radius = 10}) {
+    return '$_base/consumers/stores/search?lat=$lat&lng=$lng&query=$query&radius_km=$radius';
+  }
   static String consumerStoreDetails(String storeId) => '$_base/consumers/stores/$storeId';
   static String consumerStoreProducts(String storeId) => '$_base/consumers/stores/$storeId/products';
   static String consumerProductDetails(String productId) => '$_base/consumers/stores/products/$productId';

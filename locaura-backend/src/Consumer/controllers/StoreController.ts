@@ -59,4 +59,28 @@ export class StoreController {
             res.status(404).json({ success: false, message: error.message || 'Product not found' });
         }
     };
+
+    search_stores_and_products = async (req: Request, res: Response) => {
+        try {
+            const { lat, lng, query, radius_km } = req.query;
+            
+            if (!lat || !lng || !query) {
+                return res.status(400).json({ success: false, message: 'Latitude, longitude and query are required' });
+            }
+
+            const searchParams = {
+                lat: parseFloat(lat as string),
+                lng: parseFloat(lng as string),
+                query: query as string,
+                radius_km: radius_km ? parseFloat(radius_km as string) : 10
+            };
+
+            const results = await this.store_service.search_stores_and_products(searchParams);
+            
+            res.status(200).json({ success: true, data: results });
+        } catch (error: any) {
+            Logger.error(`Consumer search error: ${error.message}`, 'ConsumerStoreController');
+            res.status(500).json({ success: false, message: 'Failed to search' });
+        }
+    };
 }

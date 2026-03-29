@@ -41,4 +41,18 @@ class HomeRepository {
       throw Exception('Nearby Stores API error: $e');
     }
   }
+
+  Future<Map<String, dynamic>> searchNearby(double lat, double lng, String query, {double radius = 10}) async {
+    try {
+      final response = await _apiClient.get(
+        ApiEndpoints.consumerSearchStoresAndProducts(lat, lng, query, radius: radius),
+      );
+      if (response.data['success'] == true) {
+        return response.data['data'] as Map<String, dynamic>;
+      }
+      throw Exception('Failed to search');
+    } catch (e) {
+      throw Exception('Search API error: $e');
+    }
+  }
 }
