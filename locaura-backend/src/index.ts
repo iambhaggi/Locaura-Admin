@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -9,6 +9,7 @@ import auth_routes from './Retailer/routes/auth_routes';
 import store_routes from './Retailer/routes/store.routes';
 import product_routes from './Retailer/routes/product.routes';
 import payout_routes from './Retailer/routes/payout_routes';
+import admin_routes from './Admin/routes/admin_routes';
 import consumer_auth_routes from './Consumer/routes/auth_routes';
 import consumer_cart_routes from './Consumer/routes/cart_routes';
 import consumer_checkout_routes from './Consumer/routes/checkout_routes';
@@ -59,6 +60,7 @@ app.use('/api/v1/stores', store_routes); // Retailer stores
 app.use('/api/v1/stores/:store_id/products', product_routes); // Retailer products
 app.use('/api/v1/retailers/payouts', payout_routes); // Retailer payouts
 app.use('/api/v1/retailers/orders', retailer_order_routes); // Retailer order management
+app.use('/api/v1/admin', admin_routes); // Admin management
 
 app.use('/api/v1/consumers/auth', consumer_auth_routes); // Consumer auth
 app.use('/api/v1/consumers/cart', consumer_cart_routes); // Consumer Cart

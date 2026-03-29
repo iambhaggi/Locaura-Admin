@@ -76,34 +76,58 @@ export class StoreService {
         };
     }
 
-    async search_stores_and_products(params: {lat: number, lng: number, query: string, radius_km: number}) {
-        const { lat, lng, query, radius_km } = params;
-        const maxDistanceMeters = radius_km * 1000;
+    async search_stores_and_products(params: {lat?: number, lng?: number, query: string, radius_km?: number}) {
+        const { lat, lng, query, radius_km = 10 } = params;
         
-        // Find nearby active stores
-        const nearbyStores = await StoreModel.find({
+        let queryObj: any = {
             status: 'active',
-            is_active: true,
-            location: {
+            is_active: true
+        };
+
+        // 1. Spatial filter (Only if coordinates are provided)
+        if (lat !== undefined && lng !== undefined) {
+            const maxDistanceMeters = radius_km * 1000;
+            queryObj.location = {
                 $near: {
                     $geometry: { type: "Point", coordinates: [lng, lat] },
                     $maxDistance: maxDistanceMeters
                 }
-            }
-        }).select('_id store_name slug logo_url delivery_fee delivery_radius_km rating total_reviews is_open_now');
+            };
+        }
 
-        const storeIds = nearbyStores.map(s => s._id);
+        // 2. Find matching stores (Nearby OR by Address/Name if no coordinates)
+        const stores = await StoreModel.find(queryObj).select('_id store_name slug logo_url delivery_fee delivery_radius_km rating total_reviews is_open_now address');
 
-        if (storeIds.length === 0) {
+        const searchRegex = new RegExp(query, 'i');
+        
+        // Filter stores based on Name OR Address components
+        const matchingStores = stores.filter(s => 
+            searchRegex.test(s.store_name) || 
+            (s.address && (
+                searchRegex.test(s.address.street || '') || 
+                searchRegex.test(s.address.city || '') || 
+                searchRegex.test(s.address.state || '') ||
+                searchRegex.test(s.address.landmark || '')
+            ))
+        );
+
+        const storeIds = matchingStores.map(s => s._id);
+
+        // 3. Find matching products
+        let productQuery: any = { status: 'active' };
+        
+        // If location is provided, we only want products from nearby stores.
+        // If the location search yielded matching stores, we restrict products to those.
+        // Otherwise, if no location, we stay global or use the matching stores found.
+        if (storeIds.length > 0) {
+            productQuery.store_id = { $in: storeIds };
+        } else if (lat !== undefined && lng !== undefined) {
+            // Location provided but no stores found nearby
             return { stores: [], products: [] };
         }
 
-        const searchRegex = new RegExp(query, 'i');
-        const matchingStores = nearbyStores.filter(s => searchRegex.test(s.store_name));
-
         const matchingProducts = await ProductModel.find({
-            store_id: { $in: storeIds },
-            status: 'active',
+            ...productQuery,
             $or: [
                 { name: { $regex: searchRegex } },
                 { description: { $regex: searchRegex } },

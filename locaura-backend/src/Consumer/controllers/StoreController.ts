@@ -64,13 +64,13 @@ export class StoreController {
         try {
             const { lat, lng, query, radius_km } = req.query;
             
-            if (!lat || !lng || !query) {
-                return res.status(400).json({ success: false, message: 'Latitude, longitude and query are required' });
+            if (!query) {
+                return res.status(400).json({ success: false, message: 'Query is required for search' });
             }
 
             const searchParams = {
-                lat: parseFloat(lat as string),
-                lng: parseFloat(lng as string),
+                lat: lat ? parseFloat(lat as string) : undefined,
+                lng: lng ? parseFloat(lng as string) : undefined,
                 query: query as string,
                 radius_km: radius_km ? parseFloat(radius_km as string) : 10
             };
