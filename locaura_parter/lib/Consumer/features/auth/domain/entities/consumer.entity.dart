@@ -74,7 +74,8 @@ class ConsumerEntity with _$ConsumerEntity {
 @freezed
 class ConsumerCartEntity with _$ConsumerCartEntity {
   const factory ConsumerCartEntity({
-    String? storeId,
+    @JsonKey(name: 'store_id') String? storeId,
+    @JsonKey(name: 'store_name') String? storeName,
     @Default([]) List<ConsumerCartItemEntity> items,
     @Default(0.0) double subtotal,
     @Default(0.0) double total,
@@ -90,15 +91,19 @@ class ConsumerCartEntity with _$ConsumerCartEntity {
 class ConsumerCartItemEntity with _$ConsumerCartItemEntity {
   const factory ConsumerCartItemEntity({
     required String variantId,
-    required int quantity,
     required String productId,
     required String productName,
     required String brandName,
-    required String size,
-    required String color,
+    String? variantSku,
+    String? variantLabel,
+    String? thumbUrl,
     required double price,
     double? originalPrice,
-    String? thumbUrl,
+    required String size,
+    required String color,
+    required int quantity,
+    @JsonKey(name: 'total_price') required double totalPrice,
+    @JsonKey(name: 'stock_available') int? stockAvailable,
   }) = _ConsumerCartItemEntity;
 
   factory ConsumerCartItemEntity.fromJson(Map<String, dynamic> json) =>

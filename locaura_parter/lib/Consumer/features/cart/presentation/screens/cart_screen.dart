@@ -50,8 +50,23 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         onRefresh: () => ref.read(authControllerProvider.notifier).refreshConsumerProfile(),
         child: CustomScrollView(
           slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 8.h),
+                child: Row(
+                  children: [
+                    Icon(Icons.storefront, color: AppColors.gold, size: 20.sp),
+                    SizedBox(width: 8.w),
+                    Text(
+                      cart.storeName ?? 'Partner Store',
+                      style: GoogleFonts.inter(fontSize: 18.sp, fontWeight: FontWeight.w700, color: AppColors.charcoal),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             SliverPadding(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => _buildCartItem(cart.items[index], index),
@@ -266,7 +281,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500),
               ),
               Text(
-                '₹${total + 5}',
+                '₹${total.toInt()}',
                 style: GoogleFonts.inter(fontSize: 20.sp, fontWeight: FontWeight.w700, color: AppColors.charcoal),
               ),
             ],

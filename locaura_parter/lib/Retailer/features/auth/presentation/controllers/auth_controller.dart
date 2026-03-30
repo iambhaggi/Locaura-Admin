@@ -303,8 +303,12 @@ class AuthController extends StateNotifier<AuthState> {
         state = AuthState.error(failure.message);
         state = AuthState.consumerAuthenticated(currentState.consumer);
       },
-      (_) async {
-        await refreshConsumerProfile();
+      (_) {
+        // Clear locally immediately
+        final updatedConsumer = currentState.consumer.copyWith(
+          cart: const ConsumerCartEntity(items: [], storeId: null),
+        );
+        state = AuthState.consumerAuthenticated(updatedConsumer);
       },
     );
   }

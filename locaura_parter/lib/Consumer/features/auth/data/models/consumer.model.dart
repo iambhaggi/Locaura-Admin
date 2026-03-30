@@ -109,6 +109,7 @@ class LocationModel with _$LocationModel {
 class CartModel with _$CartModel {
   const factory CartModel({
     @JsonKey(name: 'store_id') String? storeId,
+    @JsonKey(name: 'store_name') String? storeName,
     @Default([]) List<CartItemModel> items,
     @Default(0.0) double subtotal,
     @Default(0.0) double total,
@@ -123,11 +124,12 @@ class CartModel with _$CartModel {
 extension CartModelX on CartModel {
   ConsumerCartEntity toEntity() => ConsumerCartEntity(
         storeId: storeId,
+        storeName: storeName,
         items: items.map((i) => i.toEntity()).toList(),
-        subtotal: subtotal,
-        total: total,
-        delivery_fee: delivery_fee,
-        platform_fee: platform_fee,
+        subtotal: subtotal.toDouble(),
+        total: total.toDouble(),
+        delivery_fee: delivery_fee.toDouble(),
+        platform_fee: platform_fee.toDouble(),
       );
 }
 
@@ -144,6 +146,10 @@ class CartItemModel with _$CartItemModel {
     double? price,
     @JsonKey(name: 'original_price') double? originalPrice,
     @JsonKey(name: 'thumb_url') String? thumbUrl,
+    @JsonKey(name: 'variant_sku') String? variantSku,
+    @JsonKey(name: 'variant_label') String? variantLabel,
+    @JsonKey(name: 'total_price') double? totalPrice,
+    @JsonKey(name: 'stock_available') int? stockAvailable,
   }) = _CartItemModel;
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) =>
@@ -155,12 +161,16 @@ extension CartItemModelX on CartItemModel {
         variantId: variantId,
         quantity: quantity,
         productId: productId??'',
-        productName: productName ?? '',
+        productName: productName ?? 'Unknown Product',
         brandName: brandName ?? '',
         size: size ?? '',
         color: color ?? '',
-        price: price ?? 0.0,
-        originalPrice: originalPrice,
+        price: price?.toDouble() ?? 0.0,
+        originalPrice: originalPrice?.toDouble(),
         thumbUrl: thumbUrl,
+        variantSku: variantSku,
+        variantLabel: variantLabel,
+        totalPrice: totalPrice?.toDouble() ?? ((price?.toDouble() ?? 0.0) * quantity),
+        stockAvailable: stockAvailable,
       );
 }

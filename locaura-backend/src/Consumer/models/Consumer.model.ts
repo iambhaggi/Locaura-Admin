@@ -18,11 +18,20 @@ export interface IConsumerAddress {
 export interface ICartItem {
     variant_id: mongoose.Types.ObjectId;
     quantity: number;
+    product_name?: string;
+    brand_name?: string;
+    price?: number;
+    thumb_url?: string;
 }
 
 export interface IConsumerCart {
     store_id?: mongoose.Types.ObjectId;
+    store_name?: string;
     items: ICartItem[];
+    subtotal?: number;
+    platform_fee?: number;
+    delivery_fee?: number;
+    total?: number;
 }
 
 export interface IConsumer extends Document {
@@ -66,7 +75,11 @@ const AddressSchema = new Schema<IConsumerAddress>(
 const CartItemSchema = new Schema<ICartItem>(
     {
         variant_id: { type: Schema.Types.ObjectId, ref: 'ChildProduct', required: true },
-        quantity: { type: Number, required: true, min: 1 }
+        quantity: { type: Number, required: true, min: 1 },
+        product_name: { type: String },
+        brand_name: { type: String },
+        price: { type: Number },
+        thumb_url: { type: String }
     },
     { _id: false }
 );
@@ -74,7 +87,12 @@ const CartItemSchema = new Schema<ICartItem>(
 const CartSchema = new Schema<IConsumerCart>(
     {
         store_id: { type: Schema.Types.ObjectId, ref: 'Store' },
-        items: { type: [CartItemSchema], default: () => [] }
+        store_name: { type: String },
+        items: { type: [CartItemSchema], default: () => [] },
+        subtotal: { type: Number, default: 0 },
+        platform_fee: { type: Number, default: 0 },
+        delivery_fee: { type: Number, default: 0 },
+        total: { type: Number, default: 0 }
     },
     { _id: false }
 );
