@@ -23,7 +23,12 @@ import rider_delivery_routes from './Rider/routes/delivery_routes';
 import rider_payout_routes from './Rider/routes/payout_routes';
 import upload_routes from './upload/routes/upload.routes';
 
+import { createServer } from 'http';
+import { SocketService } from './Notifications/infra/socket/SocketService';
+import test_notification_routes from './Notifications/routes/test_notification_routes';
+
 const app = express();
+const httpServer = createServer(app);
 const port = process.env.PORT || 3000;
 const mongo_uri = process.env.NODE_ENV === 'test'
   ? 'mongodb://localhost:27017/locaura-test'
@@ -33,6 +38,11 @@ const mongo_uri = process.env.NODE_ENV === 'test'
 mongoose.connect(mongo_uri)
   .then(() => Logger.success(`Successfully connected to MongoDB (${process.env.NODE_ENV === 'test' ? 'Test' : 'Dev'})`, 'Database'))
   .catch((error) => Logger.error(`Initial MongoDB connection error: ${error}`, 'Database'));
+
+// Initialize Socket.io
+if (process.env.NODE_ENV !== 'test') {
+    SocketService.get_instance().initialize(httpServer);
+}
 
 // Middlewares
 app.use(cors());
@@ -76,13 +86,17 @@ app.use('/api/v1/riders/deliveries', rider_delivery_routes); // Rider delivery r
 app.use('/api/v1/riders/payouts', rider_payout_routes); // Rider payouts
 app.use('/api/v1/upload', upload_routes); // Shared upload module
 
+// Notification & Real-Time Tools
+app.use('/api/v1/test/notify', test_notification_routes);
+
 // Error handling - Add at the end of all routes
 app.use(error_handler);
 
+
 // Start the server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(port, () => {
-    Logger.success(`Server is running on http://localhost:${port}`, 'Server');
+  httpServer.listen(port, () => {
+    Logger.success(`Server is running with Socket.io on http://localhost:${port}`, 'Server');
   });
 }
 

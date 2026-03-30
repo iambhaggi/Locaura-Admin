@@ -2,6 +2,7 @@ import { OrderRepository } from '../repositories/OrderRepository';
 import { StoreRepository } from '../repositories/StoreRepository';
 import { OrderStatus } from '../enums/order.enum';
 import mongoose from 'mongoose';
+import { NotificationUseCase } from '../../Notifications/app/NotificationUseCase';
 
 export class OrderService {
     private order_repository = new OrderRepository();
@@ -31,7 +32,7 @@ export class OrderService {
             throw new Error(`Cannot accept order in ${order.status} status`);
         }
 
-        return this.order_repository.update(order_id, {
+        const updatedOrder = await this.order_repository.update(order_id, {
             status: OrderStatus.ACCEPTED,
             $push: {
                 status_history: {
@@ -43,6 +44,12 @@ export class OrderService {
                 }
             }
         });
+
+        if (updatedOrder) {
+            NotificationUseCase.notify_order_status_update(updatedOrder.consumer_id as any, OrderStatus.ACCEPTED, updatedOrder.order_number);
+        }
+
+        return updatedOrder;
     }
 
     async pack_order(order_id: string, retailer_id: string) {
@@ -52,7 +59,7 @@ export class OrderService {
             throw new Error(`Cannot pack order in ${order.status} status`);
         }
 
-        return this.order_repository.update(order_id, {
+        const updatedOrder = await this.order_repository.update(order_id, {
             status: OrderStatus.PACKED,
             $push: {
                 status_history: {
@@ -64,6 +71,12 @@ export class OrderService {
                 }
             }
         });
+
+        if (updatedOrder) {
+             NotificationUseCase.notify_order_status_update(updatedOrder.consumer_id as any, OrderStatus.PACKED, updatedOrder.order_number);
+        }
+
+        return updatedOrder;
     }
 
     async cancel_order(order_id: string, retailer_id: string, reason: string) {

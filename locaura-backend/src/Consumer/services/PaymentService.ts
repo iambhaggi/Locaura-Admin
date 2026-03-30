@@ -1,7 +1,9 @@
-﻿import PaymentModel from '../../Retailer/models/Payment.model';
+import PaymentModel from '../../Retailer/models/Payment.model';
 import { PaymentStatus } from '../../Retailer/enums/order.enum';
 import { OrderRepository } from '../../Retailer/repositories/OrderRepository';
 import { get_razorpay_gateway } from '../../utils/RazorpayGatewayService';
+
+import { NotificationUseCase } from '../../Notifications/app/NotificationUseCase';
 
 export class PaymentService {
     private order_repository = new OrderRepository();
@@ -76,11 +78,16 @@ export class PaymentService {
         payment.status = PaymentStatus.COMPLETED;
         await payment.save();
 
-        await this.order_repository.update(payment.order_id as unknown as string, {
+        const updatedOrder = await this.order_repository.update(payment.order_id as unknown as string, {
             'payment.status': PaymentStatus.COMPLETED,
             'payment.paid_at': new Date(),
             'payment.reference': razorpay_payment_id
         });
+
+        // Notify retailer
+        if (updatedOrder) {
+            NotificationUseCase.notify_new_order(updatedOrder.store_id as any, updatedOrder.retailer_id as any, updatedOrder.order_number);
+        }
 
         return payment;
     }
@@ -110,11 +117,16 @@ export class PaymentService {
         } as any;
         await payment.save();
 
-        await this.order_repository.update(payment.order_id as unknown as string, {
+        const updatedOrder = await this.order_repository.update(payment.order_id as unknown as string, {
             'payment.status': PaymentStatus.COMPLETED,
             'payment.paid_at': new Date(entity?.captured_at ? entity.captured_at * 1000 : Date.now()),
             'payment.reference': gateway_payment_id
         });
+
+        // Notify retailer
+        if (updatedOrder) {
+             NotificationUseCase.notify_new_order(updatedOrder.store_id as any, updatedOrder.retailer_id as any, updatedOrder.order_number);
+        }
 
         return payment;
     }

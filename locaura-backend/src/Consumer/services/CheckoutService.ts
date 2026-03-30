@@ -8,6 +8,8 @@ import PaymentModel from '../../Retailer/models/Payment.model';
 import { PaymentService } from './PaymentService';
 import { Logger } from '../../utils/logger';
 
+import { NotificationUseCase } from '../../Notifications/app/NotificationUseCase';
+
 interface CheckoutResult {
     order: IOrder;
     payment_id: string;
@@ -153,6 +155,11 @@ export class CheckoutService {
         };
 
         const payment_doc = await PaymentModel.create(payment_data);
+
+        // Notify retailer immediately for COD
+        if (is_cod) {
+            NotificationUseCase.notify_new_order(store._id as any, store.retailer_id as any, created_order.order_number);
+        }
 
         let razorpay_order: CheckoutResult['razorpay_order'] = undefined;
         if (!is_cod) {
