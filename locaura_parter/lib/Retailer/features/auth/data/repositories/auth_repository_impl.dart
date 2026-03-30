@@ -265,10 +265,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  ApiResult<c.ConsumerEntity> updateCartQuantity(String variantId, int quantity) async {
+  ApiResult<c.ConsumerCartEntity> updateCartQuantity(String variantId, int quantity) async {
     try {
-      await _cartRepository.updateQuantity(variantId, quantity);
-      return getConsumerProfile();
+      return Right(await _cartRepository.updateQuantity(variantId, quantity));
     } catch (e) {
       return Left(handleException(e));
     }

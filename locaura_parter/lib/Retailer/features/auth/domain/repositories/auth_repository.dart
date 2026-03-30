@@ -31,7 +31,7 @@ abstract class AuthRepository {
 
   // Cart operations (Integrated into Consumer profile)
   ApiResult<ConsumerEntity> addToCart(String storeId, String variantId, int quantity);
-  ApiResult<ConsumerEntity> updateCartQuantity(String variantId, int quantity);
+  ApiResult<ConsumerCartEntity> updateCartQuantity(String variantId, int quantity);
   ApiResult<ConsumerEntity> removeFromCart(String variantId);
   ApiResult<void> clearCart();
 }

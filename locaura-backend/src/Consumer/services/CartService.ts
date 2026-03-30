@@ -34,6 +34,7 @@ export class CartService {
                    const variant = await this.product_repository.get_variant_by_id(item.variant_id.toString());
                    if (variant) {
                        const parent = await require('../../Retailer/models/Product.model').Product.findById(variant.parent_id);
+                       item.product_id = new mongoose.Types.ObjectId(variant.parent_id.toString());
                        item.product_name = parent?.name;
                        item.brand_name = parent?.brand;
                        item.price = variant.price;
@@ -49,12 +50,17 @@ export class CartService {
             store_id: cart.store_id,
             store_name: cart.store_name,
             items: cart.items.map(i => ({
+                product_id: i.product_id,
                 variant_id: i.variant_id,
                 quantity: i.quantity,
                 product_name: i.product_name,
                 brand_name: i.brand_name,
                 price: i.price,
                 thumb_url: i.thumb_url,
+                variant_sku: i.variant_sku,
+                variant_label: i.variant_label,
+                size: i.size,
+                color: i.color,
                 total_price: (i.price || 0) * i.quantity
             })),
             subtotal: cart.subtotal || 0,
@@ -103,10 +109,15 @@ export class CartService {
         const item_data = {
             variant_id: new mongoose.Types.ObjectId(variant_id),
             quantity,
+            product_id: new mongoose.Types.ObjectId(variant.parent_id.toString()),
             product_name: parent?.name || "Product",
             brand_name: parent?.brand || "",
             price: variant.price,
-            thumb_url: variant.images?.[0] || parent?.cover_images?.[0]
+            thumb_url: variant.images?.[0] || parent?.cover_images?.[0],
+            variant_sku: variant.sku,
+            variant_label: variant.variant_label,
+            size: variant.size,
+            color: variant.color
         };
 
         if (existing_item_index >= 0) {

@@ -271,7 +271,7 @@ class AuthController extends StateNotifier<AuthState> {
         state = AuthState.error(failure.message);
         state = AuthState.consumerAuthenticated(currentState.consumer);
       },
-      (consumer) => state = AuthState.consumerAuthenticated(consumer),
+      (cart) => state = AuthState.consumerAuthenticated(currentState.consumer.copyWith(cart: cart)),
     );
   }
 

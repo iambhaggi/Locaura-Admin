@@ -10,13 +10,13 @@ part 'consumer.entity.g.dart';
 class AddressEntity with _$AddressEntity {
   const factory AddressEntity({
     @JsonKey(name: '_id') String? id,
-    required String label,
-    required String line1,
+    @Default('Home') String label,
+    @Default('') String line1,
     String? line2,
-    required String city,
-    required String state,
-    required String pincode,
-    @JsonKey(name: 'is_default') required bool isDefault,
+    @Default('') String city,
+    @Default('') String state,
+    @Default('') String pincode,
+    @JsonKey(name: 'is_default') @Default(false) bool isDefault,
     LocationEntity? location,
   }) = _AddressModel;
 
@@ -90,19 +90,19 @@ class ConsumerCartEntity with _$ConsumerCartEntity {
 @freezed
 class ConsumerCartItemEntity with _$ConsumerCartItemEntity {
   const factory ConsumerCartItemEntity({
-    required String variantId,
-    required String productId,
-    required String productName,
-    required String brandName,
-    String? variantSku,
-    String? variantLabel,
-    String? thumbUrl,
+    @JsonKey(name: 'variant_id') required String variantId,
+    @JsonKey(name: 'product_id') @Default('') String productId,
+    @JsonKey(name: 'product_name') @Default('Unknown Product') String productName,
+    @JsonKey(name: 'brand_name') @Default('') String brandName,
+    @JsonKey(name: 'variant_sku') @Default('') String variantSku,
+    @JsonKey(name: 'variant_label') @Default('') String variantLabel,
+    @JsonKey(name: 'thumb_url') @Default('') String thumbUrl,
     required double price,
     double? originalPrice,
-    required String size,
-    required String color,
+    @Default('') String size,
+    @Default('') String color,
     required int quantity,
-    @JsonKey(name: 'total_price') required double totalPrice,
+    @JsonKey(name: 'total_price') double? totalPrice,
     @JsonKey(name: 'stock_available') int? stockAvailable,
   }) = _ConsumerCartItemEntity;
 

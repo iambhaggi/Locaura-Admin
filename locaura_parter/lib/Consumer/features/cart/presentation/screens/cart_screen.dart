@@ -69,7 +69,9 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildCartItem(cart.items[index], index),
+                  (context, index) { 
+                    print(cart.items[index]);
+                    return _buildCartItem(cart.items[index], index);},
                   childCount: cart.items.length,
                 ),
               ),
@@ -129,11 +131,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  'Size: ${item.size} • ${item.brandName}',
-                  style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500),
-                ),
+                if (item.brandName.isNotEmpty || item.size.isNotEmpty)
+                  Padding(
+                    padding: EdgeInsets.only(top: 4.h),
+                    child: Text(
+                      '${item.size.isNotEmpty ? "Size: ${item.size} • " : ""}${item.brandName}',
+                      style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500),
+                    ),
+                  ),
                 SizedBox(height: 12.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -141,7 +146,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     Row(
                       children: [
                         Text(
-                          '₹${item.price.toInt()}',
+                          '₹${item.price.toInt()}${item.quantity > 1 ? " (x${item.quantity})" : ""}',
                           style: GoogleFonts.inter(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.charcoal),
                         ),
                         if (item.originalPrice != null && item.originalPrice! > item.price) ...[
@@ -223,7 +228,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
           ),
           SizedBox(height: 16.h),
-          _buildBillRow('Item Total', '₹${cart.subtotal.toInt()}'),
+          _buildBillRow(
+            'Item Total (${cart.items.fold(0, (sum, item) => sum + item.quantity)} items)', 
+            '₹${cart.subtotal.toInt()}'
+          ),
           SizedBox(height: 12.h),
           _buildBillRow('Delivery Fee', '₹${cart.delivery_fee.toInt()}'),
           SizedBox(height: 12.h),

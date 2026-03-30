@@ -16,12 +16,17 @@ export interface IConsumerAddress {
 }
 
 export interface ICartItem {
+    product_id: mongoose.Types.ObjectId;
     variant_id: mongoose.Types.ObjectId;
     quantity: number;
     product_name?: string;
     brand_name?: string;
     price?: number;
     thumb_url?: string;
+    variant_sku?: string;
+    variant_label?: string;
+    size?: string;
+    color?: string;
 }
 
 export interface IConsumerCart {
@@ -74,12 +79,17 @@ const AddressSchema = new Schema<IConsumerAddress>(
 
 const CartItemSchema = new Schema<ICartItem>(
     {
+        product_id: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
         variant_id: { type: Schema.Types.ObjectId, ref: 'ChildProduct', required: true },
         quantity: { type: Number, required: true, min: 1 },
         product_name: { type: String },
         brand_name: { type: String },
         price: { type: Number },
-        thumb_url: { type: String }
+        thumb_url: { type: String },
+        variant_sku: { type: String },
+        variant_label: { type: String },
+        size: { type: String },
+        color: { type: String }
     },
     { _id: false }
 );
