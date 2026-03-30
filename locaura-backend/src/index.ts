@@ -21,6 +21,7 @@ import retailer_order_routes from './Retailer/routes/order_routes';
 import rider_auth_routes from './Rider/routes/auth_routes';
 import rider_delivery_routes from './Rider/routes/delivery_routes';
 import rider_payout_routes from './Rider/routes/payout_routes';
+import upload_routes from './upload/routes/upload.routes';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -73,6 +74,7 @@ app.use('/api/v1/consumers/payments', consumer_payment_routes); // Consumer razo
 app.use('/api/v1/riders/auth', rider_auth_routes); // Rider auth
 app.use('/api/v1/riders/deliveries', rider_delivery_routes); // Rider delivery routes
 app.use('/api/v1/riders/payouts', rider_payout_routes); // Rider payouts
+app.use('/api/v1/upload', upload_routes); // Shared upload module
 
 // Error handling - Add at the end of all routes
 app.use(error_handler);
