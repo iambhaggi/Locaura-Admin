@@ -110,6 +110,10 @@ class CartModel with _$CartModel {
   const factory CartModel({
     @JsonKey(name: 'store_id') String? storeId,
     @Default([]) List<CartItemModel> items,
+    @Default(0.0) double subtotal,
+    @Default(0.0) double total,
+    @Default(0.0) double delivery_fee,
+    @Default(0.0) double platform_fee,
   }) = _CartModel;
 
   factory CartModel.fromJson(Map<String, dynamic> json) =>
@@ -120,6 +124,10 @@ extension CartModelX on CartModel {
   ConsumerCartEntity toEntity() => ConsumerCartEntity(
         storeId: storeId,
         items: items.map((i) => i.toEntity()).toList(),
+        subtotal: subtotal,
+        total: total,
+        delivery_fee: delivery_fee,
+        platform_fee: platform_fee,
       );
 }
 
@@ -128,6 +136,14 @@ class CartItemModel with _$CartItemModel {
   const factory CartItemModel({
     @JsonKey(name: 'variant_id') required String variantId,
     required int quantity,
+    @JsonKey(name: 'product_id') String? productId,
+    @JsonKey(name: 'product_name') String? productName,
+    @JsonKey(name: 'brand_name') String? brandName,
+    String? size,
+    String? color,
+    double? price,
+    @JsonKey(name: 'original_price') double? originalPrice,
+    @JsonKey(name: 'thumb_url') String? thumbUrl,
   }) = _CartItemModel;
 
   factory CartItemModel.fromJson(Map<String, dynamic> json) =>
@@ -138,5 +154,13 @@ extension CartItemModelX on CartItemModel {
   ConsumerCartItemEntity toEntity() => ConsumerCartItemEntity(
         variantId: variantId,
         quantity: quantity,
+        productId: productId??'',
+        productName: productName ?? '',
+        brandName: brandName ?? '',
+        size: size ?? '',
+        color: color ?? '',
+        price: price ?? 0.0,
+        originalPrice: originalPrice,
+        thumbUrl: thumbUrl,
       );
 }

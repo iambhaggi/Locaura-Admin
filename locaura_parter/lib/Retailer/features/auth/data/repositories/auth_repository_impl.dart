@@ -7,6 +7,7 @@ import '../../../../../core/network/api_result.dart';
 import '../../domain/entities/retailer.entity.dart';
 
 import '../../../../../Consumer/features/auth/data/models/consumer.model.dart'as c;
+import '../../../../../Consumer/features/cart/data/repositories/cart_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../models/retailer.model.dart';
@@ -14,8 +15,9 @@ import '../models/retailer.model.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remote;
   final SharedPreferences _prefs;
+  final CartRepository _cartRepository;
 
-  AuthRepositoryImpl(this._remote, this._prefs);
+  AuthRepositoryImpl(this._remote, this._prefs, this._cartRepository);
 
   @override
   ApiResult<void> sendOtp(String phone, String actorType) async {
@@ -167,7 +169,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  ApiResult<List<c.AddressEntity>> addConsumerAddress(c.AddressEntity address) async {
+  ApiResult<c.ConsumerEntity> addConsumerAddress(c.AddressEntity address) async {
     try {
       // Convert entity to model for network request
       final model = c.AddressModel(
@@ -190,14 +192,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
       final entity = response.consumer.toEntity(token: token);
 
-      return Right(entity.addresses);
+      return Right(entity);
     } catch (e) {
       return Left(handleException(e));
     }
   }
 
   @override
-  ApiResult<List<c.AddressEntity>> updateConsumerAddress(String addressId, c.AddressEntity address) async {
+  ApiResult<c.ConsumerEntity> updateConsumerAddress(String addressId, c.AddressEntity address) async {
     try {
       // Convert entity to model
       final model = c.AddressModel(
@@ -221,32 +223,72 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
       final entity = response.consumer.toEntity(token: token);
 
-      return Right(entity.addresses);
+      return Right(entity);
     } catch (e) {
       return Left(handleException(e));
     }
   }
   @override
-  ApiResult<List<c.AddressEntity>> setDefaultAddress(String addressId) async {
+  ApiResult<c.ConsumerEntity> setDefaultAddress(String addressId) async {
     try {
       final response = await _remote.setDefaultAddress(addressId);
       final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
       final entity = response.consumer.toEntity(token: token);
 
-      return Right(entity.addresses);
+      return Right(entity);
     } catch (e) {
       return Left(handleException(e));
     }
   }
 
   @override
-  ApiResult<List<c.AddressEntity>> deleteConsumerAddress(String addressId) async {
+  ApiResult<c.ConsumerEntity> deleteConsumerAddress(String addressId) async {
     try {
       final response = await _remote.deleteConsumerAddress(addressId);
       final token = response.token ?? _prefs.getString(AppConstants.accessTokenKey) ?? '';
       final entity = response.consumer.toEntity(token: token);
 
-      return Right(entity.addresses);
+      return Right(entity);
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
+  ApiResult<c.ConsumerEntity> addToCart(String storeId, String variantId, int quantity) async {
+    try {
+      await _cartRepository.addToCart(storeId, variantId, quantity);
+      return getConsumerProfile();
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
+  ApiResult<c.ConsumerEntity> updateCartQuantity(String variantId, int quantity) async {
+    try {
+      await _cartRepository.updateQuantity(variantId, quantity);
+      return getConsumerProfile();
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
+  ApiResult<c.ConsumerEntity> removeFromCart(String variantId) async {
+    try {
+      await _cartRepository.removeFromCart(variantId);
+      return getConsumerProfile();
+    } catch (e) {
+      return Left(handleException(e));
+    }
+  }
+
+  @override
+  ApiResult<void> clearCart() async {
+    try {
+      await _cartRepository.clearCart();
+      return const Right(null);
     } catch (e) {
       return Left(handleException(e));
     }

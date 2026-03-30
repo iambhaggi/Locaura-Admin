@@ -176,9 +176,8 @@ class AuthController extends StateNotifier<AuthState> {
         state = AuthState.error(failure.message);
         state = AuthState.consumerAuthenticated(currentState.consumer);
       },
-      (addresses) {
-        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
-        state = AuthState.consumerAuthenticated(updatedConsumer);
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
       },
     );
   }
@@ -195,9 +194,8 @@ class AuthController extends StateNotifier<AuthState> {
         state = AuthState.error(failure.message);
         state = AuthState.consumerAuthenticated(currentState.consumer);
       },
-      (addresses) {
-        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
-        state = AuthState.consumerAuthenticated(updatedConsumer);
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
       },
     );
   }
@@ -209,9 +207,8 @@ class AuthController extends StateNotifier<AuthState> {
     final result = await _repository.setDefaultAddress(addressId);
     result.fold(
       (failure) => state = AuthState.error(failure.message),
-      (addresses) {
-        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
-        state = AuthState.consumerAuthenticated(updatedConsumer);
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
       },
     );
   }
@@ -228,9 +225,86 @@ class AuthController extends StateNotifier<AuthState> {
         state = AuthState.error(failure.message);
         state = AuthState.consumerAuthenticated(currentState.consumer);
       },
-      (addresses) {
-        final updatedConsumer = currentState.consumer.copyWith(addresses: addresses);
-        state = AuthState.consumerAuthenticated(updatedConsumer);
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
+      },
+    );
+  }
+
+  Future<bool> addToCart(String storeId, String variantId, int quantity, {bool force = false}) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return false;
+
+    final currentCart = currentState.consumer.cart;
+    
+    // Check for store conflict
+    if (!force && currentCart != null && currentCart.items.isNotEmpty && 
+        currentCart.storeId != null && currentCart.storeId != storeId) {
+      return false; // Indicate conflict
+    }
+
+    state = const AuthState.loading();
+    final result = await _repository.addToCart(storeId, variantId, quantity);
+
+    return result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+        return false;
+      },
+      (consumer) {
+        state = AuthState.consumerAuthenticated(consumer);
+        return true;
+      },
+    );
+  }
+
+  Future<void> updateCartQuantity(String variantId, int quantity) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.updateCartQuantity(variantId, quantity);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (consumer) => state = AuthState.consumerAuthenticated(consumer),
+    );
+  }
+
+  Future<void> removeFromCart(String variantId) async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.removeFromCart(variantId);
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (consumer) => state = AuthState.consumerAuthenticated(consumer),
+    );
+  }
+
+  Future<void> clearCart() async {
+    final currentState = state;
+    if (currentState is! _ConsumerAuthenticated) return;
+
+    state = const AuthState.loading();
+    final result = await _repository.clearCart();
+
+    result.fold(
+      (failure) {
+        state = AuthState.error(failure.message);
+        state = AuthState.consumerAuthenticated(currentState.consumer);
+      },
+      (_) async {
+        await refreshConsumerProfile();
       },
     );
   }

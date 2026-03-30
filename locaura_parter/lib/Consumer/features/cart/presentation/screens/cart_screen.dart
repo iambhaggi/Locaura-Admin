@@ -4,45 +4,37 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:locaura_parter/Retailer/features/auth/presentation/controllers/auth_controller.dart';
+import 'package:locaura_parter/Consumer/features/auth/domain/entities/consumer.entity.dart';
 
-class CartScreen extends StatefulWidget {
+class CartScreen extends ConsumerStatefulWidget {
   const CartScreen({super.key});
 
   @override
-  State<CartScreen> createState() => _CartScreenState();
+  ConsumerState<CartScreen> createState() => _CartScreenState();
 }
 
-class _CartScreenState extends State<CartScreen> {
-  // Mock cart items
-  final List<Map<String, dynamic>> _cartItems = [
-    {
-      'id': '1',
-      'name': 'Oxford Cotton Shirt',
-      'store': 'The Reserve Pantry',
-      'price': 2499,
-      'originalPrice': 3999,
-      'size': 'M',
-      'qty': 1,
-    },
-    {
-      'id': '2',
-      'name': 'Minimalist Chrono Watch',
-      'store': 'Urban Drip Co.',
-      'price': 4500,
-      'originalPrice': 6000,
-      'size': 'Free',
-      'qty': 1,
-    },
-  ];
-
+class _CartScreenState extends ConsumerState<CartScreen> {
   @override
   Widget build(BuildContext context) {
-    if (_cartItems.isEmpty) return _buildEmptyCart();
+    final authState = ref.watch(authControllerProvider);
+    
+    return authState.when(
+      initial: () => const Scaffold(body: Center(child: Text('Please login'))),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      otpSent: (_, __) => const SizedBox.shrink(),
+      authenticated: (_) => const Scaffold(body: Center(child: Text('Retailer account active'))),
+      error: (msg) => Scaffold(body: Center(child: Text('Error: $msg'))),
+      consumerAuthenticated: (consumer) {
+        final cart = consumer.cart;
+        if (cart == null || cart.items.isEmpty) return _buildEmptyCart();
+        return _buildCartContent(cart);
+      },
+    );
+  }
 
-    final subtotal = _cartItems.fold<num>(0, (sum, item) => sum + (item['price'] * item['qty']));
-    final delivery = 40;
-    final total = subtotal + delivery;
-
+  Widget _buildCartContent(ConsumerCartEntity cart) {
     return Scaffold(
       backgroundColor: AppColors.offWhite,
       appBar: AppBar(
@@ -54,31 +46,34 @@ class _CartScreenState extends State<CartScreen> {
         ),
         centerTitle: true,
       ),
-      body: CustomScrollView(
-        slivers: [
-          SliverPadding(
-            padding: EdgeInsets.all(16.w),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildCartItem(_cartItems[index], index),
-                childCount: _cartItems.length,
+      body: RefreshIndicator(
+        onRefresh: () => ref.read(authControllerProvider.notifier).refreshConsumerProfile(),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: EdgeInsets.all(16.w),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => _buildCartItem(cart.items[index], index),
+                  childCount: cart.items.length,
+                ),
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
-              child: _buildBillDetails(subtotal, delivery, total),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                child: _buildBillDetails(cart),
+              ),
             ),
-          ),
-          SliverToBoxAdapter(child: SizedBox(height: 120.h)),
-        ],
+            SliverToBoxAdapter(child: SizedBox(height: 140.h)),
+          ],
+        ),
       ),
-      bottomSheet: _buildCheckoutBottomBar(total),
+      bottomSheet: _buildCheckoutBottomBar(cart.total),
     );
   }
 
-  Widget _buildCartItem(Map<String, dynamic> item, int index) {
+  Widget _buildCartItem(ConsumerCartItemEntity item, int index) {
     return Container(
       margin: EdgeInsets.only(bottom: 16.h),
       padding: EdgeInsets.all(12.w),
@@ -99,8 +94,13 @@ class _CartScreenState extends State<CartScreen> {
             decoration: BoxDecoration(
               color: AppColors.cream,
               borderRadius: BorderRadius.circular(10.r),
+              image: item.thumbUrl != null
+                  ? DecorationImage(image: NetworkImage(item.thumbUrl!), fit: BoxFit.cover)
+                  : null,
             ),
-            child: Icon(Icons.image_outlined, color: AppColors.grey300, size: 30.sp),
+            child: item.thumbUrl == null
+                ? Icon(Icons.image_outlined, color: AppColors.grey300, size: 30.sp)
+                : null,
           ),
           SizedBox(width: 12.w),
           // Info
@@ -109,14 +109,14 @@ class _CartScreenState extends State<CartScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['name'],
+                  item.productName,
                   style: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  'Size: ${item['size']} • ${item['store']}',
+                  'Size: ${item.size} • ${item.brandName}',
                   style: GoogleFonts.inter(fontSize: 12.sp, color: AppColors.grey500),
                 ),
                 SizedBox(height: 12.h),
@@ -126,18 +126,20 @@ class _CartScreenState extends State<CartScreen> {
                     Row(
                       children: [
                         Text(
-                          '₹${item['price']}',
+                          '₹${item.price.toInt()}',
                           style: GoogleFonts.inter(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.charcoal),
                         ),
-                        SizedBox(width: 6.w),
-                        Text(
-                          '₹${item['originalPrice']}',
-                          style: GoogleFonts.inter(
-                            fontSize: 12.sp,
-                            color: AppColors.grey400,
-                            decoration: TextDecoration.lineThrough,
+                        if (item.originalPrice != null && item.originalPrice! > item.price) ...[
+                          SizedBox(width: 6.w),
+                          Text(
+                            '₹${item.originalPrice!.toInt()}',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.sp,
+                              color: AppColors.grey400,
+                              decoration: TextDecoration.lineThrough,
+                            ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                     // Quantity control
@@ -148,20 +150,24 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                       child: Row(
                         children: [
-                          _buildQtyBtn(Icons.remove, () {
-                            if (item['qty'] > 1) {
-                              setState(() => item['qty']--);
+                          _buildQtyBtn(item.quantity <= 1 ? Icons.delete_outline : Icons.remove, () {
+                            if (item.quantity > 1) {
+                              ref.read(authControllerProvider.notifier).updateCartQuantity(item.variantId, item.quantity - 1);
+                            } else {
+                              ref.read(authControllerProvider.notifier).removeFromCart(item.variantId);
                             }
                           }),
                           Container(
                             width: 32.w,
                             alignment: Alignment.center,
                             child: Text(
-                              '${item['qty']}',
+                              '${item.quantity}',
                               style: GoogleFonts.inter(fontSize: 14.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
                             ),
                           ),
-                          _buildQtyBtn(Icons.add, () => setState(() => item['qty']++)),
+                          _buildQtyBtn(Icons.add, () {
+                            ref.read(authControllerProvider.notifier).updateCartQuantity(item.variantId, item.quantity + 1);
+                          }),
                         ],
                       ),
                     ),
@@ -187,7 +193,7 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  Widget _buildBillDetails(num subtotal, num delivery, num total) {
+  Widget _buildBillDetails(ConsumerCartEntity cart) {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -202,15 +208,15 @@ class _CartScreenState extends State<CartScreen> {
             style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.w600, color: AppColors.charcoal),
           ),
           SizedBox(height: 16.h),
-          _buildBillRow('Item Total', '₹$subtotal'),
+          _buildBillRow('Item Total', '₹${cart.subtotal.toInt()}'),
           SizedBox(height: 12.h),
-          _buildBillRow('Delivery Fee', '₹$delivery'),
+          _buildBillRow('Delivery Fee', '₹${cart.delivery_fee.toInt()}'),
           SizedBox(height: 12.h),
-          _buildBillRow('Platform Fee', '₹5'),
+          _buildBillRow('Platform Fee', '₹${cart.platform_fee.toInt()}'),
           SizedBox(height: 12.h),
           const Divider(),
           SizedBox(height: 12.h),
-          _buildBillRow('To Pay', '₹${total + 5}', isTotal: true),
+          _buildBillRow('To Pay', '₹${cart.total.toInt()}', isTotal: true),
         ],
       ),
     );

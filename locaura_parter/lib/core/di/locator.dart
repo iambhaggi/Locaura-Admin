@@ -13,6 +13,7 @@ import '../../Retailer/features/product/data/datasources/product_remote_datasour
 import '../../Retailer/features/product/data/repositories/product_repository_impl.dart';
 import '../../Retailer/features/product/domain/repositories/product_repository.dart';
 import '../../Retailer/features/product/domain/usecases/product_usecases.dart';
+import '../../Consumer/features/cart/data/repositories/cart_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -30,6 +31,7 @@ Future<void> configureDependencies() async {
     AuthRepositoryImpl(
       getIt<AuthRemoteDataSource>(),
       getIt<SharedPreferences>(),
+      CartRepository(getIt<ApiClient>()),
     ),
   );
 

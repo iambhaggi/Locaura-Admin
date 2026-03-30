@@ -76,6 +76,10 @@ class ConsumerCartEntity with _$ConsumerCartEntity {
   const factory ConsumerCartEntity({
     String? storeId,
     @Default([]) List<ConsumerCartItemEntity> items,
+    @Default(0.0) double subtotal,
+    @Default(0.0) double total,
+    @Default(0.0) double delivery_fee,
+    @Default(0.0) double platform_fee,
   }) = _ConsumerCartEntity;
 
   factory ConsumerCartEntity.fromJson(Map<String, dynamic> json) =>
@@ -87,6 +91,14 @@ class ConsumerCartItemEntity with _$ConsumerCartItemEntity {
   const factory ConsumerCartItemEntity({
     required String variantId,
     required int quantity,
+    required String productId,
+    required String productName,
+    required String brandName,
+    required String size,
+    required String color,
+    required double price,
+    double? originalPrice,
+    String? thumbUrl,
   }) = _ConsumerCartItemEntity;
 
   factory ConsumerCartItemEntity.fromJson(Map<String, dynamic> json) =>

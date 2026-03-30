@@ -24,8 +24,14 @@ abstract class AuthRepository {
     String? email,
   });
 
-  ApiResult<List<AddressEntity>> addConsumerAddress(AddressEntity address);
-  ApiResult<List<AddressEntity>> updateConsumerAddress(String addressId, AddressEntity address);
-  ApiResult<List<AddressEntity>> setDefaultAddress(String addressId);
-  ApiResult<List<AddressEntity>> deleteConsumerAddress(String addressId);
+  ApiResult<ConsumerEntity> addConsumerAddress(AddressEntity address);
+  ApiResult<ConsumerEntity> updateConsumerAddress(String addressId, AddressEntity address);
+  ApiResult<ConsumerEntity> setDefaultAddress(String addressId);
+  ApiResult<ConsumerEntity> deleteConsumerAddress(String addressId);
+
+  // Cart operations (Integrated into Consumer profile)
+  ApiResult<ConsumerEntity> addToCart(String storeId, String variantId, int quantity);
+  ApiResult<ConsumerEntity> updateCartQuantity(String variantId, int quantity);
+  ApiResult<ConsumerEntity> removeFromCart(String variantId);
+  ApiResult<void> clearCart();
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:locaura_parter/Retailer/features/auth/presentation/controllers/auth_controller.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/router/app_router.dart';
 import '../providers/product_detail_provider.dart';
@@ -209,7 +210,7 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                             Padding(
                               padding: EdgeInsets.only(bottom: 4.h),
                               child: Text(
-                                '₹${comparePrice!.toInt()}',
+                                '₹${comparePrice.toInt()}',
                                 style: GoogleFonts.inter(
                                   fontSize: 14.sp,
                                   color: AppColors.grey500,
@@ -411,30 +412,129 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                   Expanded(
                     child: SizedBox(
                       height: 56.h,
-                      child: ElevatedButton(
-                        onPressed: isOutOfStock
-                            ? null
-                            : () {
-                                // TODO: Add current variant to cart
-                                context.push(AppRoutes.consumerCart);
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.charcoal,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: AppColors.grey300,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          isOutOfStock ? 'Out of Stock' : 'Add to Cart',
-                          style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.bold),
-                        ),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final authState = ref.watch(authControllerProvider);
+                          final isLoading = authState.maybeWhen(loading: () => true, orElse: () => false);
+                          
+                          return ElevatedButton(
+                            onPressed: (isOutOfStock || isLoading)
+                                ? null
+                                : () async {
+                                    final curAuthState = ref.read(authControllerProvider);
+                                    final consumer = curAuthState.maybeMap(
+                                      consumerAuthenticated: (c) => c.consumer,
+                                      orElse: () => null,
+                                    );
+
+                                    if (consumer == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Please login to add to cart')),
+                                      );
+                                      return;
+                                    }
+
+                                    final cart = consumer.cart;
+                                    final isInCart = cart?.items.any((item) => item.variantId == selectedVariant.id) ?? false;
+
+                                    if (isInCart) {
+                                      context.push(AppRoutes.consumerCart);
+                                      return;
+                                    }
+
+                                    final storeId = (product.store is String)
+                                        ? product.store as String
+                                        : (product.store as NearbyStoreEntity).id;
+
+                                    // Attempt to add
+                                    final success = await ref.read(authControllerProvider.notifier).addToCart(
+                                          storeId,
+                                          selectedVariant.id,
+                                          1,
+                                        );
+
+                                    if (!success && context.mounted) {
+                                      // Potential store conflict
+                                      final shouldReplace = await _showConflictDialog(context, cart?.storeId ?? "Another Store");
+                                      if (shouldReplace == true) {
+                                        await ref.read(authControllerProvider.notifier).clearCart();
+                                        await ref.read(authControllerProvider.notifier).addToCart(
+                                              storeId,
+                                              selectedVariant.id,
+                                              1,
+                                              force: true,
+                                            );
+                                      }
+                                    } else if (success && context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Added ${product.name} to cart!'),
+                                          backgroundColor: Colors.green,
+                                          behavior: SnackBarBehavior.floating,
+                                          action: SnackBarAction(
+                                            label: 'VIEW CART',
+                                            textColor: Colors.white,
+                                            onPressed: () => context.push(AppRoutes.consumerCart),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.charcoal,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: AppColors.grey300,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                              elevation: 0,
+                            ),
+                            child: isLoading
+                                ? SizedBox(
+                                    width: 20.w,
+                                    height: 20.w,
+                                    child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                  )
+                                : Consumer(builder: (context, ref, _) {
+                                    final auth = ref.watch(authControllerProvider);
+                                    final cart = auth.maybeMap(
+                                      consumerAuthenticated: (c) => c.consumer.cart,
+                                      orElse: () => null,
+                                    );
+                                    final isInCart = cart?.items.any((item) => item.variantId == selectedVariant.id) ?? false;
+                                    
+                                    return Text(
+                                      isOutOfStock 
+                                        ? 'Out of Stock' 
+                                        : (isInCart ? 'Go to Cart' : 'Add to Cart'),
+                                      style: GoogleFonts.inter(fontSize: 16.sp, fontWeight: FontWeight.bold),
+                                    );
+                                  }),
+                          );
+                        },
                       ),
                     ),
                   ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+  Future<bool?> _showConflictDialog(BuildContext context, String currentStore) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Replace Cart Items?'),
+        content: Text('Your cart contains items from $currentStore. Would you like to clear your cart and add items from this store instead?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('REPLACE', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
