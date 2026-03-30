@@ -33,6 +33,21 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 1. Check if stores are already loaded and initialize if necessary
+      final storeState = ref.read(storeControllerProvider);
+      storeState.maybeWhen(
+        success: (stores) {
+          if (stores.isNotEmpty && _selectedStore == null) {
+            setState(() => _selectedStore = stores.first);
+            ref
+                .read(productControllerProvider.notifier)
+                .fetchStoreProducts(stores.first.id);
+          }
+        },
+        orElse: () {},
+      );
+
+      // 2. Fetch stores to ensure data is fresh (will trigger ref.listen if it changes)
       ref.read(storeControllerProvider.notifier).fetchMyStores();
     });
   }
@@ -53,12 +68,21 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
       next.maybeWhen(
         success: (stores) {
           if (stores.isNotEmpty) {
-            if (_selectedStore == null) {
-              // Initial load
-              setState(() => _selectedStore = stores.first);
+            final productState = ref.read(productControllerProvider);
+            final isProductInitial = productState.maybeWhen(
+              initial: () => true,
+              orElse: () => false,
+            );
+
+            if (_selectedStore == null || isProductInitial) {
+              // Initial load or transition to success with no selection/products
+              final targetStore = _selectedStore ?? stores.first;
+              if (_selectedStore == null) {
+                setState(() => _selectedStore = targetStore);
+              }
               ref
                   .read(productControllerProvider.notifier)
-                  .fetchStoreProducts(stores.first.id);
+                  .fetchStoreProducts(targetStore.id);
             } else {
               // Synchronize _selectedStore with updated data from the list
               final updatedStore = stores.firstWhere(
@@ -81,8 +105,11 @@ class _InventoryTabState extends ConsumerState<InventoryTab> {
         child: storeState.maybeWhen(
           success: (stores) {
             if (stores.isEmpty) return _buildEmptyState(context);
-            // Ensure we have a selection if logic above missed it for some reason
-            _selectedStore ??= stores.first;
+            // If stores are available but _selectedStore isn't set yet, show loading
+            // It will be set by ref.listen or initState callback very soon
+            if (_selectedStore == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
             return CustomScrollView(
               slivers: [
