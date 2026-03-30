@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../../../core/di/locator.dart';
+import '../../../../../core/network/upload_repository.dart';
 import '../../domain/entities/product.entity.dart';
 import '../../domain/usecases/product_usecases.dart';
 
@@ -19,6 +22,8 @@ class ProductState with _$ProductState {
   const factory ProductState.variantCreated(ProductVariantEntity variant) = _VariantCreated;
   const factory ProductState.variantUpdated(ProductVariantEntity variant) = _VariantUpdated;
   const factory ProductState.variantDeleted() = _ProductDeletedVariant;
+  const factory ProductState.imageUploading() = _ImageUploading;
+  const factory ProductState.imageUploaded(String url) = _ImageUploaded;
   const factory ProductState.error(String message) = _Error;
 }
 
@@ -33,6 +38,8 @@ class ProductController extends StateNotifier<ProductState> {
   final GetVariantDetails _getVariantDetails;
   final UpdateVariant _updateVariant;
   final DeleteVariant _deleteVariant;
+  final UploadRepository _uploadRepository;
+  final ImagePicker _picker = ImagePicker();
 
   ProductController({
     required CreateProduct createProduct,
@@ -45,6 +52,7 @@ class ProductController extends StateNotifier<ProductState> {
     required GetVariantDetails getVariantDetails,
     required UpdateVariant updateVariant,
     required DeleteVariant deleteVariant,
+    required UploadRepository uploadRepository,
   })  : _createProduct = createProduct,
         _getStoreProducts = getStoreProducts,
         _getProductDetails = getProductDetails,
@@ -55,6 +63,7 @@ class ProductController extends StateNotifier<ProductState> {
         _getVariantDetails = getVariantDetails,
         _updateVariant = updateVariant,
         _deleteVariant = deleteVariant,
+        _uploadRepository = uploadRepository,
         super(const ProductState.initial());
 
   Future<void> fetchProductDetails(String storeId, String productId) async {
@@ -318,6 +327,35 @@ class ProductController extends StateNotifier<ProductState> {
       (_) => true,
     );
   }
+
+  Future<String?> pickAndUploadImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+
+      if (image == null) return null;
+
+      state = const ProductState.imageUploading();
+      
+      final result = await _uploadRepository.uploadImage(File(image.path));
+
+      return result.fold(
+        (failure) {
+          state = ProductState.error(failure.message);
+          return null;
+        },
+        (url) {
+          state = ProductState.imageUploaded(url);
+          return url;
+        },
+      );
+    } catch (e) {
+      state = ProductState.error(e.toString());
+      return null;
+    }
+  }
 }
 
 final productControllerProvider =
@@ -333,5 +371,6 @@ final productControllerProvider =
     getVariantDetails: getIt<GetVariantDetails>(),
     updateVariant: getIt<UpdateVariant>(),
     deleteVariant: getIt<DeleteVariant>(),
+    uploadRepository: ref.watch(uploadRepositoryProvider),
   );
 });

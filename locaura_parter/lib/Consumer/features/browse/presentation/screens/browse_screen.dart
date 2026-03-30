@@ -120,10 +120,20 @@ class _BrowseScreenState extends ConsumerState<BrowseScreen> {
       separatorBuilder: (_, __) => SizedBox(height: 12.h),
       itemBuilder: (context, index) {
         final product = products[index];
+        final String? productId = product['_id'] ?? product['id'];
+        
         return InkWell(
-          onTap: () => context.push(
-            AppRoutes.consumerProductDetail.replaceAll(':id', product['_id']),
-          ),
+          onTap: () {
+            if (productId != null) {
+              context.push(
+                AppRoutes.consumerProductDetail.replaceAll(':id', productId),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Could not open product details: Missing ID')),
+              );
+            }
+          },
           child: Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(

@@ -442,9 +442,21 @@ class _ConsumerProductDetailScreenState extends ConsumerState<ConsumerProductDet
                                       return;
                                     }
 
-                                    final storeId = (product.store is String)
-                                        ? product.store as String
-                                        : (product.store as NearbyStoreEntity).id;
+                                    String? storeId;
+                                    if (product.store is String) {
+                                      storeId = product.store as String;
+                                    } else if (product.store is NearbyStoreEntity) {
+                                      storeId = (product.store as NearbyStoreEntity).id;
+                                    } else if (product.store is Map<String, dynamic>) {
+                                      storeId = product.store['_id'] ?? product.store['id'];
+                                    }
+
+                                    if (storeId == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Store information is missing')),
+                                      );
+                                      return;
+                                    }
 
                                     // Attempt to add
                                     final success = await ref.read(authControllerProvider.notifier).addToCart(

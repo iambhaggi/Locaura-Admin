@@ -1,5 +1,7 @@
 class ApiEndpoints {
   static const String _base = '/api/v1';
+  static const String uploadImage = '$_base/upload/image';
+
 
   // Auth — Shared OTP Endpoints (If you have a global one) 
   // Wait, backend divides them. 

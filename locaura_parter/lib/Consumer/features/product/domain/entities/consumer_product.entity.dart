@@ -6,13 +6,14 @@ part 'consumer_product.entity.g.dart';
 @freezed
 class ConsumerProductVariant with _$ConsumerProductVariant {
   const factory ConsumerProductVariant({
-    required String id,
+    @JsonKey(name: '_id') required String id,
     String? sku,
     String? size,
     String? color,
     required double price,
     double? compare_at_price,
-    @Default(0) int stock,
+    @JsonKey(name: 'stock_quantity') @Default(0) int stock,
+    @Default([]) List<String> images,
     @Default(true) bool is_active,
   }) = _ConsumerProductVariant;
 
@@ -22,8 +23,8 @@ class ConsumerProductVariant with _$ConsumerProductVariant {
 @freezed
 class ConsumerProductEntity with _$ConsumerProductEntity {
   const factory ConsumerProductEntity({
-    required String id,
-    required dynamic store, // Can be String or Map (NearbyStoreEntity)
+    @JsonKey(name: '_id') required String id,
+    @JsonKey(name: 'store_id') required dynamic store, // Can be String or Map (NearbyStoreEntity)
     required String name,
     String? brand,
     String? description,

@@ -119,13 +119,11 @@ abstract class ApiService {
   Future<Either<Failure, String>> uploadFile({
     required String path,
     required File file,
-    required String folder,
     void Function(int sent, int total)? onProgress,
   }) async {
     try {
       final formData = FormData.fromMap({
-        'folder': folder,
-        'fileName': await MultipartFile.fromFile(
+        'image': await MultipartFile.fromFile(
           file.path,
           filename: basename(file.path),
         ),
@@ -134,17 +132,18 @@ abstract class ApiService {
       final response = await httpClient.post(
         path,
         data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+        options: Options(contentType: 'multipart/form-data'),
         onSendProgress: onProgress,
       );
 
-      final url = response.data?['data']?['fileUrl'] as String?;
+      final url = response.data?['data']?['url'] as String?;
       if (url == null) return const Left(ServerFailure(message: 'File URL missing in response'));
       return Right(url);
     } catch (e) {
       return Left(handleException(e));
     }
   }
+
 
   // ─── Options builder ───────────────────────────────────────────────────────
 

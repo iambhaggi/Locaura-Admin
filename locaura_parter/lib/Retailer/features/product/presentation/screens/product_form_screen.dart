@@ -46,7 +46,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   bool _trackInventory = true;
   bool _isSaving = false;
-  ProductEntity? _existingProduct;
+  List<String> _uploadedImageUrls = [];
   final Map<String, VariantRowData> _variantRows = {};
 
   @override
@@ -109,7 +109,6 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   void _prefillFromProduct(ProductEntity product) {
-    _existingProduct = product;
     _brandController.text = product.brand ?? '';
     _nameController.text = product.name;
     _descController.text = product.description ?? '';
@@ -121,6 +120,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         _selectedCategory = product.categories.first;
       }
     }
+    _uploadedImageUrls = List.from(product.coverImages);
     setState(() {});
   }
 
@@ -243,6 +243,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               'base_price': price,
               'base_compare_at_price': comparePrice,
               'categories': _selectedCategory != null ? [_selectedCategory] : [],
+              'cover_images': _uploadedImageUrls,
             },
           );
     } else {
@@ -255,7 +256,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             basePrice: price,
             categories: _selectedCategory != null ? [_selectedCategory!] : [],
             productAttributes: [],
-            coverImages: [],
+            coverImages: _uploadedImageUrls,
             gender: null,
             tags: [],
           );
@@ -298,6 +299,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       next.maybeWhen(
         productCreated: (p) => context.showSnackbar('Product created!'),
         productUpdated: (p) => context.showSnackbar('Product updated!'),
+        imageUploaded: (url) {
+          setState(() => _uploadedImageUrls.add(url));
+          context.showSnackbar('Image uploaded successfully!');
+        },
         error: (msg) => context.showSnackbar(msg, isError: true),
         orElse: () {},
       );
@@ -315,7 +320,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               children: [
-                _buildImageSection(),
+                _buildImageSection(state),
                 const SizedBox(height: 24),
                 _buildTextField('Brand Name', 'Roadster', _brandController),
                 const SizedBox(height: 16),
@@ -383,39 +388,91 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  Widget _buildImageSection() {
+  Widget _buildImageSection(ProductState state) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 200,
-          width: 160,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: _existingProduct?.coverImages.isNotEmpty == true
-                ? AppImage(imageUrl: _existingProduct!.coverImages.first, fit: BoxFit.cover)
-                : const Icon(Icons.image, size: 60, color: Colors.grey),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFFF4F8FB),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFB3D4FF), width: 1.5, style: BorderStyle.solid), // In a real app use dashed_rect package or custom painter
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.add, color: Color(0xFF1976D2), size: 18),
-              SizedBox(width: 8),
-              Text('Add Images', style: TextStyle(color: Color(0xFF1976D2), fontWeight: FontWeight.w600)),
-            ],
+        const Text('Product Images', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87)),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _uploadedImageUrls.length + 1,
+            itemBuilder: (context, index) {
+              if (index == _uploadedImageUrls.length) {
+                // Add Image Button
+                return GestureDetector(
+                  onTap: () async {
+                    await ref.read(productControllerProvider.notifier).pickAndUploadImage();
+                  },
+                  child: Container(
+                    width: 100,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F8FB),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFB3D4FF), width: 1.5, style: BorderStyle.solid),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        state.maybeWhen(
+                          imageUploading: () => const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1976D2)),
+                          ),
+                          orElse: () => const Icon(Icons.add_a_photo_outlined, color: Color(0xFF1976D2), size: 24),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          state.maybeWhen(
+                            imageUploading: () => 'Uploading...',
+                            orElse: () => 'Add',
+                          ),
+                          style: const TextStyle(color: Color(0xFF1976D2), fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              final url = _uploadedImageUrls[index];
+              return Stack(
+                children: [
+                  Container(
+                    width: 100,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: AppImage(imageUrl: url, fit: BoxFit.cover),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 16,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _uploadedImageUrls.removeAt(index)),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
