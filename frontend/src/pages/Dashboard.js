@@ -23,7 +23,6 @@ import {
   LocalShipping,
   ShoppingCart,
   AttachMoney,
-  TrendingUp,
   CheckCircle,
   Warning,
   Schedule,
@@ -118,28 +117,28 @@ function Dashboard() {
   const statsCards = [
     {
       title: 'Total Stores',
-      value: stats.totalStores.toString(),
+      value: stats.totalStores.toLocaleString(),
       change: '+8%',
       icon: <Store />,
       color: '#10b981',
     },
     {
       title: 'Total Consumers',
-      value: stats.totalConsumers.toString(),
+      value: stats.totalConsumers.toLocaleString(),
       change: '+12%',
       icon: <People />,
       color: '#6366f1',
     },
     {
       title: 'Active Riders',
-      value: stats.totalRiders.toString(),
+      value: stats.totalRiders.toLocaleString(),
       change: '+15%',
       icon: <LocalShipping />,
       color: '#f59e0b',
     },
     {
       title: 'Total Orders',
-      value: stats.totalOrders.toString(),
+      value: stats.totalOrders.toLocaleString(),
       change: '+23%',
       icon: <ShoppingCart />,
       color: '#ef4444',
@@ -160,14 +159,14 @@ function Dashboard() {
     },
     {
       title: 'Completed Orders',
-      value: stats.completedOrders.toString(),
+      value: stats.completedOrders.toLocaleString(),
       change: '+5%',
       icon: <CheckCircle />,
       color: '#22c55e',
     },
     {
       title: 'Pending Orders',
-      value: stats.pendingOrders.toString(),
+      value: stats.pendingOrders.toLocaleString(),
       change: '+0%',
       icon: <Schedule />,
       color: '#0ea5e9',
@@ -181,21 +180,21 @@ function Dashboard() {
     },
     {
       title: 'Products',
-      value: stats.totalProducts.toString(),
+      value: stats.totalProducts.toLocaleString(),
       change: '+6%',
       icon: <AttachMoney />,
       color: '#8b5cf6',
     },
     {
       title: 'Payments',
-      value: stats.totalPayments.toString(),
+      value: stats.totalPayments.toLocaleString(),
       change: '+10%',
       icon: <AttachMoney />,
       color: '#14b8a6',
     },
     {
       title: 'Retailers',
-      value: stats.totalRetailers.toString(),
+      value: stats.totalRetailers.toLocaleString(),
       change: '+5%',
       icon: <Store />,
       color: '#0f766e',
@@ -359,85 +358,91 @@ function Dashboard() {
   return (
     <Box sx={{ p: 3, background: 'transparent' }}>
       <Box sx={{ mb: 4 }}>
-        <Card
-          sx={{
-            p: { xs: 3, md: 4 },
-            borderRadius: '28px',
-            background: 'linear-gradient(135deg, #3366ff 0%, #7c3aed 100%)',
-            color: '#fff',
-            boxShadow: '0 30px 80px rgba(51, 102, 255, 0.18)',
-            overflow: 'hidden',
-          }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'flex-start', gap: 3 }}>
-            <Box sx={{ maxWidth: 680 }}>
-              <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5 }}>
-                Dashboard Analytics
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.88)', mb: 2.5, maxWidth: 620 }}>
-                A clean, modern admin view with instant insight into orders, revenue, approvals and store performance.
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {['Live overview', 'Revenue growth', 'Approval status', 'Sales pulse'].map((label) => (
-                  <Chip
-                    key={label}
-                    label={label}
-                    size="small"
-                    sx={{
-                      background: 'rgba(255,255,255,0.18)',
-                      color: '#fff',
-                      borderRadius: 2,
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              {['day', 'week', 'month', 'year'].map((range) => (
-                <Button
-                  key={range}
-                  variant={dateRange === range ? 'contained' : 'outlined'}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 3, mb: 3 }}>
+          <Box sx={{ maxWidth: 700 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+              Dashboard Overview
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2, maxWidth: 640 }}>
+              Fast, clean insight for the admin team. Monitor store performance, order flow, rider onboarding and pending approvals in one polished view.
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {['Live overview', 'Revenue growth', 'Approval tracking', 'Sales health'].map((label) => (
+                <Chip
+                  key={label}
+                  label={label}
                   size="small"
-                  onClick={() => setDateRange(range)}
                   sx={{
-                    textTransform: 'capitalize',
-                    minWidth: 92,
-                    borderColor: 'rgba(255,255,255,0.35)',
-                    color: '#fff',
-                    '&.MuiButton-contained': {
-                      background: 'rgba(255,255,255,0.98)',
-                      color: '#1e3a8a',
-                    },
+                    background: 'rgba(51, 102, 255, 0.08)',
+                    color: '#1d4ed8',
+                    fontWeight: 700,
+                    borderRadius: 2,
                   }}
-                >
-                  {range}
-                </Button>
+                />
               ))}
             </Box>
           </Box>
 
-          <Grid container spacing={2} sx={{ mt: 3 }}>
-            {[
-              { label: 'Revenue', value: `₹${stats.revenue.toLocaleString()}` },
-              { label: 'Orders', value: stats.totalOrders },
-              { label: 'New Stores', value: stats.newStores },
-              { label: 'Low Stock', value: stats.lowStockProducts },
-            ].map((item, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Card sx={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                  <CardContent sx={{ p: 2 }}>
-                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.75)', mb: 0.5, display: 'block' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {['day', 'week', 'month', 'year'].map((range) => (
+              <Button
+                key={range}
+                variant={dateRange === range ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => setDateRange(range)}
+                sx={{
+                  textTransform: 'capitalize',
+                  minWidth: 92,
+                }}
+              >
+                {range}
+              </Button>
+            ))}
+          </Box>
+        </Box>
+
+        <Grid container spacing={2}>
+          {[
+            {
+              label: 'Revenue',
+              value: `₹${stats.revenue.toLocaleString()}`,
+              icon: <AttachMoney sx={{ color: '#0f766e' }} />,
+            },
+            {
+              label: 'Total Orders',
+              value: stats.totalOrders.toLocaleString(),
+              icon: <ShoppingCart sx={{ color: '#ef4444' }} />,
+            },
+            {
+              label: 'Active Riders',
+              value: stats.totalRiders.toLocaleString(),
+              icon: <LocalShipping sx={{ color: '#f59e0b' }} />,
+            },
+            {
+              label: 'New Stores',
+              value: stats.newStores.toLocaleString(),
+              icon: <Store sx={{ color: '#6366f1' }} />,
+            },
+          ].map((item, index) => (
+            <Grid item xs={12} sm={6} md={3} key={index}>
+              <Card sx={{ borderRadius: 3, p: 2, minHeight: 126, border: '1px solid rgba(148, 163, 184, 0.16)' }}>
+                <CardContent sx={{ p: 0, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
                       {item.label}
                     </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#fff' }}>
-                      {item.value}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Card>
+                    <Avatar sx={{ bgcolor: 'rgba(51, 102, 255, 0.08)', color: 'primary.main', width: 36, height: 36 }}>
+                      {item.icon}
+                    </Avatar>
+                  </Box>
+                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    {item.value}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
 
       {/* Error Alert */}
@@ -492,41 +497,29 @@ function Dashboard() {
             <Card
               sx={{
                 height: '100%',
-                background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}dd 100%)`,
-                border: `1px solid ${stat.color}20`,
-                transition: 'all 0.3s ease-in-out',
+                borderRadius: 3,
+                border: '1px solid rgba(148, 163, 184, 0.16)',
+                backgroundColor: '#ffffff',
+                transition: 'all 0.25s ease',
                 '&:hover': {
-                  transform: 'translateY(-6px)',
-                  boxShadow: `0 12px 35px ${stat.color}40`,
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
                 },
               }}
             >
               <CardContent sx={{ p: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                  <Avatar sx={{ backgroundColor: 'rgba(255,255,255,0.2)', width: 40, height: 40, color: 'white' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Avatar sx={{ backgroundColor: `${stat.color}20`, color: stat.color, width: 40, height: 40 }}>
                     {stat.icon}
                   </Avatar>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                      backgroundColor: 'rgba(255,255,255,0.2)',
-                      px: 1,
-                      py: 0.5,
-                      borderRadius: 1,
-                    }}
-                  >
-                    <TrendingUp sx={{ fontSize: 16, color: 'white' }} />
-                    <Typography variant="caption" sx={{ color: 'white', fontWeight: 600 }}>
-                      {stat.change}
-                    </Typography>
-                  </Box>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+                    {stat.change}
+                  </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', mb: 0.5 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
                   {stat.value}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {stat.title}
                 </Typography>
               </CardContent>
