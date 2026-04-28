@@ -37,13 +37,27 @@ const initializeDatabases = async () => {
 
 // Routes (App Data Sync + Admin Management)
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/consumers', require('./routes/consumerRoutes')); // Admin consumer management
+app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/app/riders', require('./routes/appRiderRoutes')); // App rider routes MUST come before /api/app
 app.use('/api/app', require('./routes/appDataRoutes')); // App data routes (from friend's MongoDB)
 app.use('/api/support', require('./routes/supportRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes')); // Notification routes
+
+// Support deployed /v1 prefix as well
+app.use('/v1/auth', require('./routes/authRoutes'));
+app.use('/v1/admin/auth', require('./routes/authRoutes'));
+app.use('/v1/users', require('./routes/userRoutes'));
+app.use('/v1/consumers', require('./routes/consumerRoutes'));
+app.use('/v1/admin', require('./routes/adminRoutes'));
+app.use('/v1/app/riders', require('./routes/appRiderRoutes'));
+app.use('/v1/app', require('./routes/appDataRoutes'));
+app.use('/v1/support', require('./routes/supportRoutes'));
+app.use('/v1/settings', require('./routes/settingsRoutes'));
+app.use('/v1/notifications', require('./routes/notificationRoutes')); // Notification routes
 
 // Health Check
 app.get('/health', (req, res) => {

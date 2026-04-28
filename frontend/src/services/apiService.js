@@ -6,7 +6,7 @@
 const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000')
   .replace(/\/+$|\/api$/i, '')
   .replace(/\/+$/, '');
-const API_PREFIX = '/api';
+const API_PREFIX = '/v1';
 
 /**
  * Generic fetch wrapper with error handling
@@ -99,11 +99,11 @@ export const storesAPI = {
   },
 
   updateStatus: async (storeId, status) => {
-    return apiCall(`/app/stores/${storeId}/status`, 'PATCH', { status });
+    return apiCall(`/admin/stores/${storeId}/status`, 'PATCH', { status });
   },
 
   approve: async (storeId) => {
-    return apiCall(`/app/stores/${storeId}/approve`, 'PATCH');
+    return apiCall(`/admin/stores/${storeId}/status`, 'PATCH', { status: 'active' });
   },
 
   reject: async (storeId, rejection_reason) => {

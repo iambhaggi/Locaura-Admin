@@ -50,7 +50,7 @@ const AllStores = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await storesAPI.getAll();
+        const response = await storesAPI.getAll({ limit: 1000 });
         // API returns { success, data, pagination }
         setStores(response.data?.data || response.data || []);
       } catch (err) {

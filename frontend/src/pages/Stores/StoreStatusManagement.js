@@ -34,6 +34,7 @@ const StoreStatusManagement = () => {
   const [detailsDialog, setDetailsDialog] = useState({ open: false, data: null });
   const [rejectDialog, setRejectDialog] = useState({ open: false, data: null, reason: '' });
   const [actionStoreId, setActionStoreId] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
   const loadPendingStores = async () => {
     setLoading(true);
@@ -42,7 +43,9 @@ const StoreStatusManagement = () => {
     try {
       const response = await storesAPI.getPending({ limit: 1000 });
       const pendingStores = response?.data?.data || response?.data || [];
+      const totalCount = response?.data?.pagination?.total;
       setStores(Array.isArray(pendingStores) ? pendingStores : []);
+      setPendingCount(Number.isFinite(totalCount) ? totalCount : (Array.isArray(pendingStores) ? pendingStores.length : 0));
     } catch (err) {
       setError(err.message || 'Failed to fetch store approval queue');
     } finally {
@@ -99,7 +102,7 @@ const StoreStatusManagement = () => {
   }, [searchTerm, stores]);
 
   const stats = useMemo(() => ([
-    { label: 'Pending Stores', value: stores.length, color: '#ed6c02' },
+    { label: 'Pending Stores', value: pendingCount, color: '#ed6c02' },
     {
       label: 'Submitted Today',
       value: stores.filter((store) => {
@@ -111,7 +114,7 @@ const StoreStatusManagement = () => {
     },
     { label: 'Hidden From App', value: stores.length, color: '#d32f2f' },
     { label: 'Search Matches', value: filteredStores.length, color: '#1976d2' },
-  ]), [filteredStores.length, stores]);
+  ]), [filteredStores.length, stores, pendingCount]);
 
   const getStatusColor = (store) => {
     if (store.is_approved) return 'success';

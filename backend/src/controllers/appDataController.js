@@ -24,7 +24,6 @@ const toNumber = (value, fallback = 0) => {
 
 const buildStoreQuery = (search = '', extraFilters = {}) => {
   const query = {
-    is_approved: { $ne: false },
     ...extraFilters,
   };
 
@@ -260,7 +259,9 @@ exports.createStore = async (req, res) => {
 exports.getStores = async (req, res) => {
   try {
     const Store = await createStoreModel();
-    const { page = 1, limit = 10, search = '' } = req.query;
+    const page = toNumber(req.query.page, 1);
+    const limit = toNumber(req.query.limit, 1000);
+    const search = req.query.search || '';
     const skip = (page - 1) * limit;
 
     const query = buildStoreQuery(search);
@@ -268,7 +269,7 @@ exports.getStores = async (req, res) => {
     const stores = await Store.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
       .select('+bank_details')
       .lean();
 
@@ -294,7 +295,9 @@ exports.getStores = async (req, res) => {
 exports.getPendingStores = async (req, res) => {
   try {
     const Store = await createStoreModel();
-    const { page = 1, limit = 10, search = '' } = req.query;
+    const page = toNumber(req.query.page, 1);
+    const limit = toNumber(req.query.limit, 1000);
+    const search = req.query.search || '';
     const skip = (page - 1) * limit;
 
     const query = {
@@ -321,7 +324,8 @@ exports.getPendingStores = async (req, res) => {
     const stores = await Store.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit))
+      .limit(limit)
+      .select('+bank_details')
       .lean();
 
     const total = await Store.countDocuments(query);
@@ -342,22 +346,32 @@ exports.getPendingStores = async (req, res) => {
   }
 };
 
-// Approve a store
+// Approve or reject a store
 exports.approveStore = async (req, res) => {
   try {
     const Store = await createStoreModel();
     const { storeId } = req.params;
+    const statusValue = String(req.body?.status || 'active').trim().toLowerCase();
+
+    const isActive = statusValue === 'active' || statusValue === 'approved';
+    const isRejected = statusValue === 'rejected' || statusValue === 'reject';
+
+    if (!isActive && !isRejected) {
+      return res.status(400).json({ success: false, message: 'Invalid status value. Use "active" or "rejected".' });
+    }
+
+    const updatePayload = {
+      is_approved: isActive,
+      is_active: isActive,
+      status: isActive ? 'active' : 'rejected',
+      approved_at: isActive ? new Date() : null,
+      approved_by_admin_id: req.user?.id,
+      rejection_reason: isRejected ? (req.body?.rejection_reason || 'Rejected by admin') : null,
+    };
 
     const updatedStore = await Store.findByIdAndUpdate(
       storeId,
-      {
-        is_approved: true,
-        status: 'APPROVED',
-        is_active: true,
-        approved_at: new Date(),
-        approved_by_admin_id: req.user?.id,
-        rejection_reason: null,
-      },
+      updatePayload,
       { new: true }
     ).lean();
 
@@ -367,7 +381,7 @@ exports.approveStore = async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Store approved successfully',
+      message: isActive ? 'Store approved successfully' : 'Store rejected successfully',
       data: updatedStore,
     });
   } catch (error) {
