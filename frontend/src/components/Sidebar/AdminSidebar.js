@@ -414,10 +414,10 @@ const AdminSidebar = ({ open, onClose }) => {
       open={isMobile ? open : true}
       onClose={onClose}
       sx={{
-        width: 280,
+        width: isMobile ? '85vw' : 280,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
-          width: 280,
+          width: isMobile ? '85vw' : 280,
           boxSizing: 'border-box',
           background: 'linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)',
           borderRight: '1px solid rgba(148, 163, 184, 0.18)',
