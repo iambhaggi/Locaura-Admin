@@ -34,10 +34,6 @@ import {
 import {
   MoreVert,
   Search,
-  Support as SupportIcon,
-  BugReport,
-  QuestionAnswer,
-  Feedback,
   Add,
   Visibility,
   Email,
