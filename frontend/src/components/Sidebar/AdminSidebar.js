@@ -83,11 +83,12 @@ const AdminSidebar = ({ open, onClose }) => {
         button
         onClick={onToggle}
         sx={{
-          backgroundColor: expanded ? 'rgba(33, 150, 243, 0.1)' : 'transparent',
-          borderLeft: expanded ? '4px solid #2196F3' : 'none',
-          paddingLeft: expanded ? '12px' : '16px',
+          backgroundColor: expanded ? 'rgba(51, 102, 255, 0.12)' : 'transparent',
+          borderLeft: expanded ? '4px solid #4f46e5' : 'none',
+          paddingLeft: expanded ? '14px' : '16px',
+          borderRadius: '0 10px 10px 0',
           '&:hover': {
-            backgroundColor: 'rgba(33, 150, 243, 0.15)',
+            backgroundColor: 'rgba(51, 102, 255, 0.12)',
           },
         }}
       >
@@ -139,13 +140,14 @@ const AdminSidebar = ({ open, onClose }) => {
   );
 
   const drawerContent = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f8fbff' }}>
       {/* Header */}
       <Box
         sx={{
-          padding: '20px',
-          background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+          padding: '24px',
+          background: 'linear-gradient(140deg, #4f46e5 0%, #2563eb 100%)',
           color: 'white',
+          borderBottom: '1px solid rgba(255,255,255,0.18)',
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: 'bold', marginBottom: '5px' }}>
@@ -417,9 +419,9 @@ const AdminSidebar = ({ open, onClose }) => {
         '& .MuiDrawer-paper': {
           width: 280,
           boxSizing: 'border-box',
-          backgroundColor: '#fff',
-          borderRight: '1px solid #e0e0e0',
-          boxShadow: isMobile ? '0 8px 16px rgba(0,0,0,0.15)' : 'none',
+          background: 'linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)',
+          borderRight: '1px solid rgba(148, 163, 184, 0.18)',
+          boxShadow: isMobile ? '0 18px 40px rgba(15,23,42,0.16)' : '0 24px 70px rgba(15,23,42,0.08)',
         },
       }}
     >

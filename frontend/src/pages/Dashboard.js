@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -15,7 +15,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
 } from '@mui/material';
 import {
@@ -24,22 +23,12 @@ import {
   LocalShipping,
   ShoppingCart,
   AttachMoney,
-  Star,
   TrendingUp,
   CheckCircle,
   Warning,
   Schedule,
 } from '@mui/icons-material';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { storesAPI, consumersAPI, ridersAPI } from '../services/apiService';
+import { storesAPI, consumersAPI, ridersAPI, ordersAPI, productsAPI, paymentsAPI, retailersAPI } from '../services/apiService';
 
 function Dashboard() {
   const [stats, setStats] = useState({
@@ -47,12 +36,33 @@ function Dashboard() {
     totalConsumers: 0,
     totalRiders: 0,
     totalOrders: 0,
+    revenue: 0,
+    avgOrderValue: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    totalProducts: 0,
+    totalPayments: 0,
+    totalRetailers: 0,
+    pendingStores: 0,
+    pendingRiders: 0,
+    newStores: 0,
+    newUsers: 0,
+    lowStockProducts: 0,
+    refundIssues: 0,
   });
+  const [orders, setOrders] = useState([]);
+  const [allStores, setAllStores] = useState([]);
+  const [allConsumers, setAllConsumers] = useState([]);
+  const [allRiders, setAllRiders] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [allPayments, setAllPayments] = useState([]);
+  const [allRetailers, setAllRetailers] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
-  const [topStores, setTopStores] = useState([]);
+  const [topStoresBySales, setTopStoresBySales] = useState([]);
+  const [recentRidersOnboarded, setRecentRidersOnboarded] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [dateRange, setDateRange] = useState('month');
+  const [dateRange, setDateRange] = useState('year');
 
   useEffect(() => {
     fetchDashboardData();
@@ -64,42 +74,39 @@ function Dashboard() {
       setError('');
 
       // Fetch all data
-      const storesData = await storesAPI.getAll();
-      const consumersData = await consumersAPI.getAll();
-      const ridersData = await ridersAPI.getAll();
+      const storesData = await storesAPI.getAll({ limit: 1000 });
+      const consumersData = await consumersAPI.getAll({ limit: 1000 });
+      const ridersData = await ridersAPI.getAll({ limit: 1000 });
+      const ordersData = await ordersAPI.getAll({ limit: 1000 });
+      const productsData = await productsAPI.getAll({ limit: 1000 });
+      const paymentsData = await paymentsAPI.getAll({ limit: 1000 });
+      const retailersData = await retailersAPI.getAll({ limit: 1000 });
+      const pendingStoresData = await storesAPI.getPending({ limit: 1000 });
+      const pendingRidersData = await ridersAPI.getPending({ limit: 1000 });
 
-      // Calculate stats
       const stores = storesData.data?.data || storesData.data || [];
       const consumers = consumersData.data?.data || consumersData.data || [];
       const riders = ridersData.data?.data || ridersData.data || [];
-      const totalOrders = Array.isArray(stores)
-        ? stores.reduce((sum, store) => sum + (store.total_orders || 0), 0)
-        : 0;
+      const orders = ordersData.data?.data || ordersData.data || [];
+      const products = productsData.data?.data || productsData.data || [];
+      const payments = paymentsData.data?.data || paymentsData.data || [];
+      const retailers = retailersData.data?.data || retailersData.data || [];
+      const pendingStores = pendingStoresData.data?.pagination?.total ?? 0;
+      const pendingRiders = pendingRidersData.data?.pagination?.total ?? 0;
 
-      setStats({
-        totalStores: Array.isArray(stores) ? stores.length : 0,
-        totalConsumers: Array.isArray(consumers) ? consumers.length : 0,
-        totalRiders: Array.isArray(riders) ? riders.length : 0,
-        totalOrders: totalOrders,
-      });
+      setAllStores(stores);
+      setAllConsumers(consumers);
+      setAllRiders(riders);
+      setOrders(orders);
+      setAllProducts(products);
+      setAllPayments(payments);
+      setAllRetailers(retailers);
 
-      // Set top stores (sorted by rating/orders)
-      const sorted = stores
-        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-        .slice(0, 5);
-      setTopStores(sorted);
-
-      // Set recent orders
-      setRecentOrders(
-        stores.slice(0, 5).map((store, idx) => ({
-          id: `#${12345 + idx}`,
-          customer: store.retailer_name || 'N/A',
-          store: store.store_name,
-          amount: `₹${(Math.random() * 10000).toFixed(0)}`,
-          status: ['Delivered', 'Processing', 'Out for Delivery'][Math.floor(Math.random() * 3)],
-          time: `${Math.floor(Math.random() * 24)} hours ago`,
-        }))
-      );
+      setStats((prev) => ({
+        ...prev,
+        pendingStores,
+        pendingRiders,
+      }));
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
@@ -137,20 +144,209 @@ function Dashboard() {
       icon: <ShoppingCart />,
       color: '#ef4444',
     },
+    {
+      title: 'Revenue',
+      value: `₹${stats.revenue.toLocaleString()}`,
+      change: '+18%',
+      icon: <AttachMoney />,
+      color: '#0f766e',
+    },
+    {
+      title: 'Avg Order',
+      value: `₹${stats.avgOrderValue.toFixed(0)}`,
+      change: '+9%',
+      icon: <AttachMoney />,
+      color: '#8b5cf6',
+    },
+    {
+      title: 'Completed Orders',
+      value: stats.completedOrders.toString(),
+      change: '+5%',
+      icon: <CheckCircle />,
+      color: '#22c55e',
+    },
+    {
+      title: 'Pending Orders',
+      value: stats.pendingOrders.toString(),
+      change: '+0%',
+      icon: <Schedule />,
+      color: '#0ea5e9',
+    },
+    {
+      title: 'Pending Approvals',
+      value: `${stats.pendingStores} stores / ${stats.pendingRiders} riders`,
+      change: '+0%',
+      icon: <Warning />,
+      color: '#f97316',
+    },
+    {
+      title: 'Products',
+      value: stats.totalProducts.toString(),
+      change: '+6%',
+      icon: <AttachMoney />,
+      color: '#8b5cf6',
+    },
+    {
+      title: 'Payments',
+      value: stats.totalPayments.toString(),
+      change: '+10%',
+      icon: <AttachMoney />,
+      color: '#14b8a6',
+    },
+    {
+      title: 'Retailers',
+      value: stats.totalRetailers.toString(),
+      change: '+5%',
+      icon: <Store />,
+      color: '#0f766e',
+    },
   ];
 
   const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Delivered':
+    switch (status?.toLowerCase()) {
+      case 'delivered':
+      case 'completed':
         return <CheckCircle sx={{ color: '#10b981', fontSize: 18 }} />;
-      case 'Out for Delivery':
+      case 'out for delivery':
+      case 'out_for_delivery':
+      case 'shipped':
         return <Schedule sx={{ color: '#f59e0b', fontSize: 18 }} />;
-      case 'Processing':
+      case 'processing':
+      case 'pending':
+      case 'confirmed':
         return <Schedule sx={{ color: '#2196f3', fontSize: 18 }} />;
+      case 'cancelled':
+      case 'rejected':
+        return <Warning sx={{ color: '#ef4444', fontSize: 18 }} />;
       default:
         return null;
     }
   };
+
+  const getItemDate = useCallback((item) => {
+    const dateValue = item?.createdAt ?? item?.created_at ?? item?.updatedAt ?? item?.updated_at;
+    return dateValue ? new Date(dateValue) : null;
+  }, []);
+
+  const filterByDateRange = useCallback((items, range) => {
+    const now = new Date();
+    const days = {
+      day: 1,
+      week: 7,
+      month: 30,
+      year: 365,
+    }[range] || 30;
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+    return items
+      .filter((item) => {
+        const itemDate = getItemDate(item);
+        return itemDate && itemDate >= cutoff;
+      })
+      .sort((a, b) => new Date(getItemDate(b)) - new Date(getItemDate(a)));
+  }, [getItemDate]);
+
+  const applyDateRangeFilter = useCallback(() => {
+    const filteredStores = filterByDateRange(allStores, dateRange);
+    const filteredConsumers = filterByDateRange(allConsumers, dateRange);
+    const filteredRiders = filterByDateRange(allRiders, dateRange);
+    const filteredOrders = filterByDateRange(orders, dateRange);
+    const filteredProducts = filterByDateRange(allProducts, dateRange);
+    const filteredPayments = filterByDateRange(allPayments, dateRange);
+    const filteredRetailers = filterByDateRange(allRetailers, dateRange);
+
+    const revenue = filteredOrders.reduce((sum, order) => sum + (order.pricing?.total ?? 0), 0);
+    const completedOrders = filteredOrders.filter((order) =>
+      ['delivered', 'completed'].includes(order.status?.toLowerCase())
+    ).length;
+    const pendingOrders = filteredOrders.filter((order) =>
+      ['pending', 'processing', 'confirmed'].includes(order.status?.toLowerCase())
+    ).length;
+    const avgOrderValue = filteredOrders.length ? revenue / filteredOrders.length : 0;
+    const lowStockProducts = filteredProducts.filter((product) =>
+      (product.stock_quantity ?? product.total_stock ?? 0) < 10
+    ).length;
+    const refundIssues = filteredPayments.filter((payment) =>
+      (payment.refund_amount ?? 0) > 0 || payment.refunded_at
+    ).length;
+    const newStores = filteredStores.length;
+    const newUsers = filteredConsumers.length;
+
+    const salesByStore = filteredOrders.reduce((map, order) => {
+      const storeKey = typeof order.store_id === 'object'
+        ? order.store_id._id || order.store_id.store_name || 'Unknown'
+        : order.store_id || 'Unknown';
+      const storeName = typeof order.store_id === 'object'
+        ? order.store_id.store_name || storeKey
+        : order.store_id;
+      const current = map[storeKey] || { storeName, totalSales: 0, orders: 0 };
+      current.totalSales += order.pricing?.total ?? 0;
+      current.orders += 1;
+      map[storeKey] = current;
+      return map;
+    }, {});
+
+    const topStoresBySales = Object.values(salesByStore)
+      .sort((a, b) => b.totalSales - a.totalSales)
+      .slice(0, 5);
+
+    const recentRidersOnboarded = filteredRiders
+      .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at))
+      .slice(0, 5)
+      .map((rider) => ({
+        name: rider.name || rider.full_name || rider.phone || rider._id,
+        joinedAt: getItemDate(rider)?.toLocaleDateString() || 'N/A',
+        status: rider.status || 'active',
+      }));
+
+    setStats((prev) => ({
+      ...prev,
+      totalStores: filteredStores.length,
+      totalConsumers: filteredConsumers.length,
+      totalRiders: filteredRiders.length,
+      totalOrders: filteredOrders.length,
+      revenue,
+      avgOrderValue,
+      completedOrders,
+      pendingOrders,
+      totalProducts: filteredProducts.length,
+      totalPayments: filteredPayments.length,
+      totalRetailers: filteredRetailers.length,
+      pendingStores: filteredStores.filter((store) => store.status === 'pending').length,
+      pendingRiders: filteredRiders.filter((rider) => rider.status === 'pending').length,
+      lowStockProducts,
+      refundIssues,
+      newStores,
+      newUsers,
+    }));
+
+    setTopStoresBySales(topStoresBySales);
+
+    setRecentOrders(
+      filteredOrders.slice(0, 5).map((order) => ({
+        id: order.order_number || order._id || '—',
+        customer:
+          typeof order.consumer_id === 'object'
+            ? order.consumer_id.name || order.consumer_id._id
+            : order.consumer_id || 'N/A',
+        store:
+          typeof order.store_id === 'object'
+            ? order.store_id.store_name || order.store_id._id
+            : order.store_id || 'N/A',
+        amount: `₹${order.pricing?.total ?? 0}`,
+        status: order.status || 'pending',
+        time: getItemDate(order)
+          ? getItemDate(order).toLocaleString()
+          : 'N/A',
+      }))
+    );
+
+    setRecentRidersOnboarded(recentRidersOnboarded);
+  }, [allStores, allConsumers, allRiders, allProducts, allPayments, allRetailers, orders, dateRange, filterByDateRange, getItemDate]);
+
+  useEffect(() => {
+    applyDateRangeFilter();
+  }, [applyDateRangeFilter]);
 
   if (loading) {
     return (
@@ -161,33 +357,87 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ p: 3, background: '#f5f7fa' }}>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: '#212121' }}>
-            📊 Dashboard Overview
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#999', mt: 1 }}>
-            Welcome back! Here's your platform performance at a glance.
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {['day', 'week', 'month', 'year'].map((range) => (
-            <Button
-              key={range}
-              variant={dateRange === range ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setDateRange(range)}
-              sx={{
-                textTransform: 'capitalize',
-                ...(dateRange === range && { background: '#2196f3' }),
-              }}
-            >
-              {range}
-            </Button>
-          ))}
-        </Box>
+    <Box sx={{ p: 3, background: 'transparent' }}>
+      <Box sx={{ mb: 4 }}>
+        <Card
+          sx={{
+            p: { xs: 3, md: 4 },
+            borderRadius: '28px',
+            background: 'linear-gradient(135deg, #3366ff 0%, #7c3aed 100%)',
+            color: '#fff',
+            boxShadow: '0 30px 80px rgba(51, 102, 255, 0.18)',
+            overflow: 'hidden',
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: 'flex-start', gap: 3 }}>
+            <Box sx={{ maxWidth: 680 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, mb: 1.5 }}>
+                Dashboard Analytics
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.88)', mb: 2.5, maxWidth: 620 }}>
+                A clean, modern admin view with instant insight into orders, revenue, approvals and store performance.
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {['Live overview', 'Revenue growth', 'Approval status', 'Sales pulse'].map((label) => (
+                  <Chip
+                    key={label}
+                    label={label}
+                    size="small"
+                    sx={{
+                      background: 'rgba(255,255,255,0.18)',
+                      color: '#fff',
+                      borderRadius: 2,
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              {['day', 'week', 'month', 'year'].map((range) => (
+                <Button
+                  key={range}
+                  variant={dateRange === range ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setDateRange(range)}
+                  sx={{
+                    textTransform: 'capitalize',
+                    minWidth: 92,
+                    borderColor: 'rgba(255,255,255,0.35)',
+                    color: '#fff',
+                    '&.MuiButton-contained': {
+                      background: 'rgba(255,255,255,0.98)',
+                      color: '#1e3a8a',
+                    },
+                  }}
+                >
+                  {range}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+
+          <Grid container spacing={2} sx={{ mt: 3 }}>
+            {[
+              { label: 'Revenue', value: `₹${stats.revenue.toLocaleString()}` },
+              { label: 'Orders', value: stats.totalOrders },
+              { label: 'New Stores', value: stats.newStores },
+              { label: 'Low Stock', value: stats.lowStockProducts },
+            ].map((item, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card sx={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                  <CardContent sx={{ p: 2 }}>
+                    <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.75)', mb: 0.5, display: 'block' }}>
+                      {item.label}
+                    </Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#fff' }}>
+                      {item.value}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Card>
       </Box>
 
       {/* Error Alert */}
@@ -196,6 +446,44 @@ function Dashboard() {
           {error}
         </Alert>
       )}
+
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        {[
+          {
+            title: 'Pending Store Approvals',
+            value: stats.pendingStores,
+            color: '#f97316',
+          },
+          {
+            title: 'Pending Rider Approvals',
+            value: stats.pendingRiders,
+            color: '#0ea5e9',
+          },
+          {
+            title: 'Low Stock Products',
+            value: stats.lowStockProducts,
+            color: '#f43f5e',
+          },
+          {
+            title: 'Refund / Dispute Alerts',
+            value: stats.refundIssues,
+            color: '#a855f7',
+          },
+        ].map((item, idx) => (
+          <Grid item xs={12} sm={6} md={3} key={idx}>
+            <Card sx={{ backgroundColor: item.color, color: '#fff' }}>
+              <CardContent>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                  {item.title}
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                  {item.value}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
 
       {/* Stats Cards */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -298,16 +586,16 @@ function Dashboard() {
           </Card>
         </Grid>
 
-        {/* Top Stores */}
+        {/* Top Stores and Recent Riders */}
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                ⭐ Top Stores
+                ⭐ Top Stores by Sales
               </Typography>
-              {topStores.length > 0 ? (
+              {topStoresBySales.length > 0 ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {topStores.map((store, idx) => (
+                  {topStoresBySales.map((store, idx) => (
                     <Box
                       key={idx}
                       sx={{
@@ -321,29 +609,52 @@ function Dashboard() {
                     >
                       <Box>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {store.store_name || ('Store ' + (idx + 1))}
+                          {store.storeName || `Store ${idx + 1}`}
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Star sx={{ fontSize: 16, color: '#ffc107' }} />
-                          <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                            {store.rating || 4.5}
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#999' }}>
-                            ({store.total_reviews || 0} reviews)
-                          </Typography>
-                        </Box>
+                        <Typography variant="caption" sx={{ color: '#555' }}>
+                          ₹{store.totalSales.toLocaleString()} from {store.orders} orders
+                        </Typography>
                       </Box>
-                      <Chip
-                        label={store.status || 'Active'}
-                        color={store.status === 'active' ? 'success' : 'default'}
-                        size="small"
-                      />
+                      <Chip label={`#${idx + 1}`} size="small" />
                     </Box>
                   ))}
                 </Box>
               ) : (
                 <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 4 }}>
                   No stores available
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card sx={{ mt: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                🚴 Recent Riders Onboarded
+              </Typography>
+              {recentRidersOnboarded.length > 0 ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {recentRidersOnboarded.map((rider, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{
+                        p: 2,
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {rider.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#555' }}>
+                        Joined {rider.joinedAt} • {rider.status}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              ) : (
+                <Typography variant="body2" sx={{ color: '#999', textAlign: 'center', py: 4 }}>
+                  No recent riders found
                 </Typography>
               )}
             </CardContent>

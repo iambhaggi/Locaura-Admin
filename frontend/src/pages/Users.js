@@ -129,11 +129,17 @@ function Users() {
   ];
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          User Management
-        </Typography>
+    <Container sx={{ py: 4, background: 'transparent' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 800, mb: 1 }}>
+            Users Management
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#475569', maxWidth: 560 }}>
+            Manage users from a fresh admin interface with cleaner controls, polished cards, and better visual hierarchy.
+          </Typography>
+        </Box>
+
         <Button
           variant="contained"
           startIcon={<Add />}
@@ -143,20 +149,40 @@ function Users() {
         </Button>
       </Box>
 
+      <Card sx={{ mb: 4, borderRadius: 24, background: 'linear-gradient(135deg, #3366ff 0%, #7c3aed 100%)', color: '#fff', boxShadow: '0 30px 80px rgba(51, 102, 255, 0.18)' }}>
+        <CardContent>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            Premium user insights
+          </Typography>
+          <Typography sx={{ color: 'rgba(255,255,255,0.88)', mb: 2, maxWidth: 660 }}>
+            A beautiful experience across the admin panel with clear status badges, instant filters, and a modern dashboard feel.
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {['Fast search', 'Better data', 'Rich actions', 'Clean tables'].map((item) => (
+              <Chip key={item} label={item} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.18)', color: '#fff' }} />
+            ))}
+          </Box>
+        </CardContent>
+      </Card>
+
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat, idx) => (
           <Grid item xs={12} sm={6} md={3} key={idx}>
-            <Card>
+            <Card sx={{ borderRadius: 18, overflow: 'hidden', minHeight: 140 }}>
               <CardContent>
-                <Typography variant="h6">{stat.label}</Typography>
-                <Typography variant="h4" sx={{ color: stat.color, mt: 1 }}>{stat.value}</Typography>
+                <Typography variant="subtitle2" sx={{ color: '#64748b', mb: 1 }}>
+                  {stat.label}
+                </Typography>
+                <Typography variant="h4" sx={{ color: stat.color, fontWeight: 800 }}>
+                  {stat.value}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
+      <Card sx={{ borderRadius: 24, boxShadow: '0 24px 80px rgba(15,23,42,0.08)' }}>
         <CardContent>
           <Box sx={{ mb: 3 }}>
             <TextField
