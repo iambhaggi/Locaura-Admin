@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 
 /**
  * Hook to handle navigation based on entity type and ID
