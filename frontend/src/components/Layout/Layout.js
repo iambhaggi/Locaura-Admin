@@ -143,8 +143,8 @@ function Layout({ children }) {
             boxShadow: '0 10px 30px rgba(15,23,42,0.08)',
           }}
         >
-          <Toolbar sx={{ justifyContent: 'space-between', py: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Toolbar sx={{ justifyContent: 'space-between', py: 1, flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
               {isMobile && (
                 <IconButton 
                   onClick={handleMobileDrawerOpen}
@@ -156,6 +156,9 @@ function Layout({ children }) {
               <Typography variant="h6" sx={{ 
                 fontWeight: 600, 
                 color: '#212121',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}>
                 {getPageTitle()}
               </Typography>
@@ -198,11 +201,12 @@ function Layout({ children }) {
 
         {/* Page Content */}
         <Box sx={{ 
-          p: 4,
+          p: { xs: 2, md: 4 },
           background: 'transparent',
           minHeight: 'calc(100vh - 64px)',
           maxWidth: '1440px',
           mx: 'auto',
+          width: '100%',
         }}>
           {children}
         </Box>
