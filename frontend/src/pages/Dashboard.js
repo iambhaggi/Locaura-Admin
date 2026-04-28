@@ -537,8 +537,8 @@ function Dashboard() {
                 📋 Recent Orders
               </Typography>
               {recentOrders.length > 0 ? (
-                <TableContainer>
-                  <Table>
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                  <Table sx={{ minWidth: 650 }}>
                     <TableHead>
                       <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                         <TableCell>Order ID</TableCell>
