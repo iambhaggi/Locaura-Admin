@@ -1,5 +1,7 @@
 const { createAdminSettingsModel } = require('../models/AdminSettings');
 const { createAuditLogModel } = require('../models/AuditLog');
+const { createAdminNotificationModel } = require('../models/AdminNotification');
+const { createAuditLog, logSettingsChange } = require('../utils/auditLogger');
 
 /**
  * Get all admin settings
@@ -129,16 +131,8 @@ const updateSettings = async (req, res) => {
     await settings.save();
 
     // Create audit log
-    await AuditLog.create({
-      action: 'UPDATE_SETTINGS',
-      actor: adminId,
-      changes: {
-        old: oldSettings,
-        new: settings.toObject()
-      },
-      metadata: {
-        updatedFields: Object.keys(updates)
-      }
+    await logSettingsChange(adminId, category, oldSettings, settings.toObject(), {
+      updatedFields: Object.keys(updates)
     });
 
     res.status(200).json({
@@ -192,14 +186,16 @@ const updateSettingsByCategory = async (req, res) => {
     await settings.save();
 
     // Create audit log
-    await AuditLog.create({
+    await createAuditLog({
       action: 'UPDATE_SETTINGS_CATEGORY',
       actor: adminId,
+      resourceType: 'Settings',
       changes: {
         category,
         old: oldValue,
         new: settings[category]
-      }
+      },
+      description: `Updated ${category} settings`
     });
 
     res.status(200).json({
@@ -447,9 +443,10 @@ const importSettings = async (req, res) => {
     await settings.save();
 
     // Create audit log
-    await AuditLog.create({
+    await createAuditLog({
       action: 'IMPORT_SETTINGS',
       actor: adminId,
+      resourceType: 'Settings',
       changes: {
         old: oldSettings,
         new: settings.toObject()
@@ -457,7 +454,8 @@ const importSettings = async (req, res) => {
       metadata: {
         mergeMode: merge,
         importedFields: Object.keys(importData)
-      }
+      },
+      description: 'Imported settings'
     });
 
     res.status(200).json({
@@ -502,13 +500,15 @@ const resetSettings = async (req, res) => {
     }
 
     // Create audit log
-    await AuditLog.create({
+    await createAuditLog({
       action: 'RESET_SETTINGS',
       actor: adminId,
+      resourceType: 'Settings',
       changes: {
         old: oldSettings?.toObject(),
         new: defaultSettings.toObject()
-      }
+      },
+      description: 'Reset settings to defaults'
     });
 
     res.status(200).json({

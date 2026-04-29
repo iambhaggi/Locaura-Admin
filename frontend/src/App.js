@@ -91,6 +91,7 @@ import FCMManagement from './pages/Notifications/FCMManagement';
 // Analytics & Reports
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
+import AuditLog from './pages/AuditLog';
 
 // Legacy Pages (Old)
 import AppConsumers from './pages/AppConsumers';
@@ -445,6 +446,7 @@ function App() {
                       {/* ============ ANALYTICS & REPORTS ============ */}
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/reports" element={<Reports />} />
+                      <Route path="/audit-log" element={<AuditLog />} />
                       
                       {/* ============ LEGACY ROUTES (deprecated) ============ */}
                       <Route path="/app-consumers" element={<AppConsumers />} />

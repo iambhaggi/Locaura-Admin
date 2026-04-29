@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { logDatabaseChange } = require('../utils/auditLogger');
 
 // Define schemas for admin database (mirror of app data)
 const AdminConsumerSchema = new mongoose.Schema({
@@ -255,6 +256,15 @@ class SyncService {
         case 'insert':
           await AdminModel.create(change.fullDocument);
           console.log(`➕ Inserted ${collectionName}: ${change.documentKey._id}`);
+          await logDatabaseChange(
+            'CREATE',
+            null,
+            collectionName,
+            change.documentKey._id,
+            null,
+            change.fullDocument,
+            { source: 'changeStream' }
+          );
           break;
 
         case 'update':
@@ -264,11 +274,29 @@ class SyncService {
             { new: true }
           );
           console.log(`🔄 Updated ${collectionName}: ${change.documentKey._id}`);
+          await logDatabaseChange(
+            'UPDATE',
+            null,
+            collectionName,
+            change.documentKey._id,
+            change.updateDescription.removedFields || {},
+            change.updateDescription.updatedFields,
+            { source: 'changeStream' }
+          );
           break;
 
         case 'delete':
           await AdminModel.findByIdAndDelete(change.documentKey._id);
           console.log(`🗑️ Deleted ${collectionName}: ${change.documentKey._id}`);
+          await logDatabaseChange(
+            'DELETE',
+            null,
+            collectionName,
+            change.documentKey._id,
+            change.fullDocument || null,
+            null,
+            { source: 'changeStream' }
+          );
           break;
 
         case 'replace':

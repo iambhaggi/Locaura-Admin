@@ -28,11 +28,10 @@ const auditLogSchema = new mongoose.Schema(
       required: true,
     },
 
-    // User who performed the action
+    // User who performed the action (optional for system-level sync events)
     actor: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'AdminUser',
-      required: true,
+      ref: 'AdminUser'
     },
 
     // Resource affected

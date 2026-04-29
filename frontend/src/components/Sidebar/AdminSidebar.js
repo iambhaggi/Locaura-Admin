@@ -377,6 +377,23 @@ const AdminSidebar = ({ open, onClose }) => {
           {/* ADMIN CONTROL PANEL */}
           <ListItem
             button
+            onClick={() => handleNavigate('/audit-log')}
+            sx={{
+              backgroundColor: isActive('/audit-log') ? 'rgba(33, 150, 243, 0.25)' : 'transparent',
+              borderLeft: isActive('/audit-log') ? '4px solid #1976D2' : 'none',
+              paddingLeft: isActive('/audit-log') ? '12px' : '16px',
+              '&:hover': {
+                backgroundColor: 'rgba(33, 150, 243, 0.15)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: '40px', color: '#FF9800' }}>
+              <AnalyticsIcon />
+            </ListItemIcon>
+            <ListItemText primary="📊 Audit Log" sx={{ fontWeight: '500' }} />
+          </ListItem>
+          <ListItem
+            button
             onClick={() => handleNavigate('/admin/settings')}
             sx={{
               backgroundColor: isActive('/admin/settings') ? 'rgba(33, 150, 243, 0.25)' : 'transparent',

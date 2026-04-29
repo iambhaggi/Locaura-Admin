@@ -46,6 +46,7 @@ app.use('/api/app', require('./routes/appDataRoutes')); // App data routes (from
 app.use('/api/support', require('./routes/supportRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes')); // Notification routes
+app.use('/api', require('./routes/auditRoutes')); // Audit log routes
 
 // Support deployed /v1 prefix as well
 app.use('/v1/auth', require('./routes/authRoutes'));

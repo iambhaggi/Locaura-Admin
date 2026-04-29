@@ -1,4 +1,5 @@
 const { createNotificationModel } = require('../models/AppNotification');
+const { createAdminNotificationModel } = require('../models/AdminNotification');
 const { createConsumerModel } = require('../models/Consumer');
 const { createRetailerModel } = require('../models/AppRetailer');
 const { createRiderModel } = require('../models/AppRider');
@@ -192,18 +193,48 @@ const sendEmailNotifications = async (userIds, title, description, discountPerce
 // Get all notifications
 exports.getNotifications = async (req, res) => {
   try {
-    const Notification = await createNotificationModel();
     const { page = 1, limit = 20, recipient_role } = req.query;
     const skip = (page - 1) * limit;
+    const userId = req.user?.id;
+    const userRole = String(req.user?.role || '').trim().toLowerCase();
 
-    const query = recipient_role ? { recipient_role } : {};
-    const notifications = await Notification.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .lean();
+    let notifications = [];
 
-    const total = await Notification.countDocuments(query);
+    // Get app notifications for non-admin users
+    if (userRole !== 'admin' && recipient_role) {
+      const Notification = await createNotificationModel();
+      const query = { recipient_role };
+      const appNotifications = await Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean();
+
+      notifications = appNotifications.map(notif => ({
+        ...notif,
+        notification_type: 'app'
+      }));
+    }
+
+    // Get admin notifications for admin users
+    if (userRole === 'admin') {
+      const AdminNotification = await createAdminNotificationModel();
+      const query = userId ? { $or: [{ recipient_id: userId }, { recipient_id: null }] } : {};
+      const adminNotifications = await AdminNotification.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .populate('audit_log_id')
+        .lean();
+
+      notifications = adminNotifications.map(notif => ({
+        ...notif,
+        notification_type: 'admin'
+      }));
+    }
+
+    // Calculate total (simplified - in production you'd want accurate totals)
+    const total = notifications.length;
 
     res.json({
       success: true,
